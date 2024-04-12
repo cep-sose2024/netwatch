@@ -1,14 +1,14 @@
 # NetWatch
 
-## Wrapper for Google Pixel devices
+## Wrapper for Android Keystore System
 
 ## Project Goal
 
-The main goal of the Netwatch team is to use the advanced security features of the Android platform, the Hardware Security Module (HSM), or rather the Trusted Execution Environment (TEE) and the Embedded Secure Element (eSE). Sensitive operations are delegated to a secure processor reached through some kernel interface. The resulting architecture looks like this:
+The main goal of the Netwatch team is to use the advanced security features of the Android platform, namely the Android Keystore system. The Android Keystore system lets you store cryptographic keys in a container to make them more difficult to extract from the device. The Android Keystore API and the underlying Keymaster HAL provide a basic but adequate set of cryptographic primitives to allow the implementation of protocols using access-controlled, hardware-backed keys. Sensitive operations are delegated to a secure processor reached through some kernel interface. The resulting architecture looks like this:
 
 ![alt text](static/access-to-keymaster.png)
 
-The goal of the project is to create a Rust-based wrapper that connects the HSM with the Crypto-Abstraction Layer provided by [j&s-soft](https://github.com/nmshd), eliminating the complexity of direct communication and provides an API that is secure, effective and developer-friendly.
+The goal of the project is to create a Rust-based wrapper that connects the HSM (Android Keystore) with the Crypto-Abstraction Layer provided by [j&s-soft](https://github.com/nmshd), eliminating the complexity of direct communication and provides an API that is secure, effective and developer-friendly.
 
 ## Features
 
