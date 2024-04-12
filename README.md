@@ -6,7 +6,7 @@
 
 The main goal of the Netwatch team is to use the advanced security features of the Android platform, the Hardware Security Module (HSM), or rather the Trusted Execution Environment (TEE) and the Embedded Secure Element (eSE). Sensitive operations are delegated to a secure processor reached through some kernel interface. The resulting architecture looks like this:
 
-![alt text](access-to-keymaster.png)
+![alt text](static/access-to-keymaster.png)
 
 The goal of the project is to create a Rust-based wrapper that connects the HSM with the Crypto-Abstraction Layer provided by [j&s-soft](https://github.com/nmshd), eliminating the complexity of direct communication and provides an API that is secure, effective and developer-friendly.
 
