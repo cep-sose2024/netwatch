@@ -10,9 +10,13 @@ jobs:
 # Fetching Process, all commits will be fetched.
     steps:
       - name: Checkout Code
-        uses: actions/checkout@v3
+      - uses: actions/checkout@v2 #get the code from the Repo to the container
+      - uses: actions-rs/toolchain@v1
         with:
           fetch-depth: 0
+          toolchain: nightly
+          components: clippy
+      - uses: actions/upload-artifact@v3 #Saves it as an artifact, to know what went wrong. Will be deleted in 30 days
 
 #Run Linter 
       - name: Lint Code Base
