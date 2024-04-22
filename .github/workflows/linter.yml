@@ -1,44 +1,60 @@
-name: Tester
+name: Rust build lint and test
 
-on: 
-  push: #push
-    branches: [ main ]
+on:
+  push:
+    branches:
+      [ main , dev]
+      
   pull_request:
-    branches: [ main ]
-
-env:
-  CARGO_TERM_COLOR: always
 
 jobs:
-  build:
-    name: Lint Code Tester
+  lint:
+    name: Lint
     runs-on: ubuntu-latest
+    steps:
+      - name: Setup | Checkout
+        uses: actions/checkout@v2
+      - name: Setup | Rust
+        uses: ATiltedTree/setup-rust@v1
+        with:
+          rust-version: stable
+          components: clippy
+      - name: Build | Lint
+        run: cargo clippy
+  compile:
+    name: Compile
+    runs-on: ubuntu-latest
+    steps:
+      - name: Setup | Checkout
+        uses: actions/checkout@v2
+      - name: Setup | Rust
+        uses: ATiltedTree/setup-rust@v1
+        with:
+          rust-version: stable
+      - name: Build | Compile
+        run: cargo check
+  test:
+    name: Test
     strategy:
       matrix:
-        toolchain: #With these 3 Toolchains the code will be tested
+        os:
+        - ubuntu-latest
+        - windows-latest
+        - macOS-latest
+        rust:
           - stable
           - beta
           - nightly
-
+    runs-on: ${{ matrix.os }}
+    needs: [compile]
     steps:
-      - uses: actions/checkout@v3 #get the code from the Repo to the container
-      - run: rustup update ${{ matrix.toolchain }} && rustup default $ {{ matrix.toolchain }}
-      - name: Build
-        run: cargo build --verbose
-      - name: Run tests
-        run: cargo test --verbose
-        # <This code Can go>
-      - uses: actions-rs/toolchain@v1
+      - name: Setup | Checkout
+        uses: actions/checkout@v2
+      - name: Setup | Rust
+        uses: ATiltedTree/setup-rust@v1
         with:
-          fetch-depth: 0
-          toolchain: nightly
-          components: clippy
-      # </This code Can go>
-      - uses: actions/upload-artifact@v3 #Saves it as an artifact, to know what went wrong. Will be deleted in 30 days
-      
-#Run Linter 
-      - name: Lint Code Base
-        uses: github/super-linter@v4
+          rust-version: ${{ matrix.rust }}
+      - name: Build | Compile
+        run: cargo test --verbose
 
-#Env Variables come here: will do it when I arrive home :d
       
