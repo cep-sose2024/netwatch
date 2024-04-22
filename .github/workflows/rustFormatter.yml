@@ -1,18 +1,25 @@
-on: pull_request
+name: Rust Format Check
 
-name: Rustfmt
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
 
 jobs:
-  format:
+  rustfmt:
     runs-on: ubuntu-latest
-    permissions:
-      pull-requests: write
+
     steps:
-      - uses: actions/checkout@v4
-      - uses: dtolnay/rust-toolchain@nightly
-        with:
-          components: rustfmt
-      - uses: mbrobbel/rustfmt-check@master
-        with:
-          token: ${{ secrets.GITHUB_TOKEN }}
-          mode: review
+    - name: Checkout code
+      uses: actions/checkout@v2
+
+    - name: Install Rust
+      uses: actions-rs/toolchain@v1
+      with:
+        profile: minimal
+        toolchain: stable
+        components: rustfmt
+
+    - name: Run rustfmt
+      run: cargo fmt -- --check
