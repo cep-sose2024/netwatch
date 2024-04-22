@@ -61,3 +61,7 @@ jobs:
         with:
           command: clippy
           args: -- -D warnings
+
+  artifcat:
+     - uses: actions/upload-artifact@v3 #Saves it as an artifact, to know what went wrong. Will be dele>
+
