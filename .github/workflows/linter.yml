@@ -1,0 +1,22 @@
+name: Tester
+
+on: push #push
+
+jobs:
+  build:
+    name: Lint Code Base
+    runs-on: ubuntu-latest
+
+# Fetching Process, all commits will be fetched.
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+
+#Run Linter 
+      - name: Lint Code Base
+        uses: github/super-linter@v4
+
+#Env Variables come here: will do it when I arrive home :d
+      
