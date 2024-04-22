@@ -36,13 +36,13 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: dtolnay/toolchain@stable
+      - uses: dtolnay/rust-toolchain@nightly
         with:
-          components: rustfmt
-          
-      - uses: mbrobbel/rustfmt-check@master
+            components: rustfmt
+      - uses: mbrobbel/rustfmt-check@Master
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
+          mode: review
 
   clippy:
     name: Clippy
