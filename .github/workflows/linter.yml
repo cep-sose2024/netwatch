@@ -30,6 +30,7 @@ jobs:
       - uses: actions-rs/cargo@v1
         with:
           command: test
+      - uses: actions/upload-artifact@v3 #Saves it as an artifact, to know what went wrong. Will be dele>
 
   fmt:
     name: Rustfmt
@@ -62,6 +63,5 @@ jobs:
           command: clippy
           args: -- -D warnings
 
-  artifcat:
-     - uses: actions/upload-artifact@v3 #Saves it as an artifact, to know what went wrong. Will be dele>
+     
 
