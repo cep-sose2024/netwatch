@@ -44,8 +44,7 @@ jobs:
       uses: actions-rs/toolchain@v1
       with:
         profile: minimal
-        toolchain: ${{ env['ACTION_LINTS_TOOLCHAIN']  }}
-        #toolchain: stable
+        toolchain: stable
         components: rustfmt
     - name: Run rustfmt
       run: cargo fmt -- --check -l
