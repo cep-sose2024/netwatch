@@ -13,6 +13,10 @@ jobs:
         with:
           java-version: 17
           distribution: "temurin"
+
+      - name: Change wrapper permissions
+        run: chmod +x ./gradlew
+
       - name: Init gradle wrapper
         run: gradle wrapper
 
@@ -20,7 +24,7 @@ jobs:
         run: chmod +x ./gradlew
 
       - name: Build with Gradle wrapper
-        run: ./gradlew build
+        run: ./gradlew build  
       - name: Run connected tests
         uses: ReactiveCircus/android-emulator-runner@v2
         with:
@@ -28,3 +32,4 @@ jobs:
           target: google_apis
           arch: x86_64
           script: ./gradlew connectedCheck
+
