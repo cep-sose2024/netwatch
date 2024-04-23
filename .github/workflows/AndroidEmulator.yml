@@ -1,8 +1,9 @@
 on: push
 name: Android Emulator runner
 jobs:
-  test:
-    runs-on: ubuntu-latest
+  connected-tests:
+    runs-on: macos-latest
+    
     steps:
       - name: Checkout
         uses: actions/checkout@v3
@@ -19,4 +20,5 @@ jobs:
         with:
           api-level: 30
           target: google_apis
+          arch: x86_64
           script: ./gradlew connectedCheck
