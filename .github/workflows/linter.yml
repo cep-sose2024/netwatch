@@ -23,9 +23,7 @@ jobs:
   test:
     name: Test Suite
     runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: ./rust_robusta
+
     steps:
       - uses: actions/checkout@v2
       - uses: actions-rs/toolchain@v1
@@ -33,6 +31,7 @@ jobs:
           profile: minimal
           toolchain: stable
           override: true
+          working-directory: ./rust_robusta
       - uses: actions-rs/cargo@v1
         with:
           command: test
@@ -41,9 +40,6 @@ jobs:
       
   rustfmt:
     runs-on: ubuntu-latest    
-    defaults:
-      run:
-        working-directory: ./rust_robusta
     steps:
     - name: Checkout code
       uses: actions/checkout@v2
@@ -54,6 +50,7 @@ jobs:
         profile: minimal
         toolchain: stable
         components: rustfmt
+        working-directory: ./rust_robusta
     - name: Run rustfmt
       run: cargo fmt -- --check
 
@@ -61,9 +58,6 @@ jobs:
   clippy:
     name: Clippy
     runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: ./rust_robusta
     steps:
       - uses: actions/checkout@v2
       - uses: actions-rs/toolchain@v1
@@ -71,9 +65,11 @@ jobs:
           profile: minimal
           toolchain: stable
           override: true
+          working-directory: ./rust_robusta
       - run: rustup component add clippy
       - uses: actions-rs/cargo@v1
         with:
+        
           command: clippy
           args: -- -D warnings
 
