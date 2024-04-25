@@ -6,9 +6,6 @@ jobs:
   check:
     name: Check
     runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: ./rust_robusta
 
     steps:
       - uses: actions/checkout@v2
@@ -24,7 +21,9 @@ jobs:
   test:
     name: Test Suite
     runs-on: ubuntu-latest
-
+    defaults:
+      run:
+        working-directory: ./rust_robusta
     steps:
       - uses: actions/checkout@v2
       - uses: actions-rs/toolchain@v1
@@ -40,7 +39,9 @@ jobs:
       
   rustfmt:
     runs-on: ubuntu-latest    
-
+    defaults:
+      run:
+        working-directory: ./rust_robusta
     steps:
     - name: Checkout code
       uses: actions/checkout@v2
@@ -58,7 +59,9 @@ jobs:
   clippy:
     name: Clippy
     runs-on: ubuntu-latest
-
+    defaults:
+      run:
+        working-directory: ./rust_robusta
     steps:
       - uses: actions/checkout@v2
       - uses: actions-rs/toolchain@v1
