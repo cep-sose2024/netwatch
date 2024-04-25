@@ -15,6 +15,7 @@ jobs:
           override: true
       - uses: actions-rs/cargo@v1
         with:
+          working-directory: prototype_rust_wrapper
           command: check
 
   test:
@@ -29,6 +30,7 @@ jobs:
           override: true
       - uses: actions-rs/cargo@v1
         with:
+          working-directory: prototype_rust_wrapper
           command: test
 
       
@@ -47,6 +49,7 @@ jobs:
         toolchain: stable
         components: rustfmt
     - name: Run rustfmt
+      working-directory: prototype_rust_wrapper
       run: cargo fmt -- --check
 
 
@@ -63,6 +66,7 @@ jobs:
       - run: rustup component add clippy
       - uses: actions-rs/cargo@v1
         with:
+          working-directory: prototype_rust_wrapper
           command: clippy
           args: -- -D warnings
 
