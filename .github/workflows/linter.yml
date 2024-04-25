@@ -8,7 +8,7 @@ jobs:
     runs-on: ubuntu-latest
     defaults:
       run:
-        working-directory: rust_robutsa
+        working-directory: ./rust_robutsa
     steps:
       - uses: actions/checkout@v2
       - uses: actions-rs/toolchain@v1
@@ -26,7 +26,7 @@ jobs:
     runs-on: ubuntu-latest
     defaults:
       run:
-        working-directory: rust_robutsa
+        working-directory: ./rust_robutsa
     steps:
       - uses: actions/checkout@v2
       - uses: actions-rs/toolchain@v1
@@ -45,7 +45,7 @@ jobs:
     runs-on: ubuntu-latest    
     defaults:
       run:
-        working-directory: rust_robutsa
+        working-directory: ./rust_robutsa
     steps:
     - name: Checkout code
       uses: actions/checkout@v2
@@ -66,7 +66,7 @@ jobs:
     runs-on: ubuntu-latest
     defaults:
       run:
-        working-directory: rust_robutsa
+        working-directory: ./rust_robutsa
     steps:
       - uses: actions/checkout@v2
       - uses: actions-rs/toolchain@v1
