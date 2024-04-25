@@ -10,6 +10,9 @@ jobs:
   test:
     name: cargo test
     runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ./rust_robusta
     steps:
       - uses: actions/checkout@v4
       - uses: actions-rust-lang/setup-rust-toolchain@v1
