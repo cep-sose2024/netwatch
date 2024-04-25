@@ -1,8 +1,8 @@
 pub(crate) mod thread_func;
 
+use robusta_jni::bridge;
 use robusta_jni::jni::objects::GlobalRef;
 use robusta_jni::jni::JavaVM;
-use robusta_jni::bridge;
 use std::sync::OnceLock;
 
 static APP_CONTEXT: OnceLock<(JavaVM, GlobalRef)> = OnceLock::new();
@@ -11,13 +11,51 @@ static APP_CONTEXT: OnceLock<(JavaVM, GlobalRef)> = OnceLock::new();
 mod jni {
     use crate::APP_CONTEXT;
     use android_logger::Config;
-    use robusta_jni::jni::objects::{GlobalRef, JObject, JValue};
-    use log::info;
+    use log::{debug, info};
     use robusta_jni::convert::{IntoJavaValue, Signature, TryFromJavaValue, TryIntoJavaValue};
     use robusta_jni::jni::errors::Result as JniResult;
     use robusta_jni::jni::objects::AutoLocal;
+    use robusta_jni::jni::objects::{GlobalRef, JObject, JValue};
     use robusta_jni::jni::JNIEnv;
     use std::thread;
+
+    #[derive(Signature, TryIntoJavaValue, IntoJavaValue, TryFromJavaValue)]
+    #[package(com.example.greetings)]
+    pub struct CryptoLayer<'env: 'borrow, 'borrow> {
+        #[instance]
+        raw: AutoLocal<'env, 'borrow>,
+    }
+
+    impl<'env: 'borrow, 'borrow> CryptoLayer<'env, 'borrow> {
+        pub extern "jni" fn runRust(self, env: &JNIEnv) {
+            android_logger::init_once(
+                Config::default()
+                    .with_tag("RUST_ROBUSTA_ANDROID_EXAMPLE")
+                    .with_max_level(log::LevelFilter::Debug)
+                    .with_max_level(log::LevelFilter::Info),
+            );
+
+            info!("TEST START");
+            let java_class = env.find_class("com/example/greetings/CryptoLayer").unwrap();
+            let _ = APP_CONTEXT.set((
+                env.get_java_vm().unwrap(),
+                env.new_global_ref(java_class).unwrap(),
+            ));
+
+            let _ = CryptoLayer::generateNewKey(env);
+            let text = CryptoLayer::encryptText(env, String::from("Hello Rust")).unwrap();
+            debug!("encrypted text: {} ", text);
+
+            let decrypted = CryptoLayer::decryptText(env, text).unwrap();
+            debug!("decrypted text: {}", decrypted);
+
+            info!("TEST END");
+        }
+
+        pub extern "java" fn generateNewKey(env: &JNIEnv) -> JniResult<()> {}
+        pub extern "java" fn encryptText(env: &JNIEnv, text: String) -> JniResult<String> {}
+        pub extern "java" fn decryptText(env: &JNIEnv, text: String) -> JniResult<String> {}
+    }
 
     #[derive(Signature, TryIntoJavaValue, IntoJavaValue, TryFromJavaValue)]
     #[package(com.example.greetings)]
@@ -28,7 +66,11 @@ mod jni {
 
     impl<'env: 'borrow, 'borrow> RobustaAndroidExample<'env, 'borrow> {
         pub extern "jni" fn runRustExample(self, env: &JNIEnv, context: JObject<'env>) {
-            android_logger::init_once(Config::default().with_tag("RUST_ROBUSTA_ANDROID_EXAMPLE"));
+            android_logger::init_once(
+                Config::default()
+                    .with_tag("RUST_ROBUSTA_ANDROID_EXAMPLE")
+                    .with_max_level(log::LevelFilter::Debug),
+            );
 
             info!("TEST START");
             let java_class = env

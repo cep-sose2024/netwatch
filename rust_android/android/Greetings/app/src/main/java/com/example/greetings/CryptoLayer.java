@@ -24,6 +24,8 @@ public class CryptoLayer {
     public static final String ANDROID_KEYSTORE = "AndroidKeyStore";
     public static final String KEYNAME = "key123";
 
+    public static native void runRust();
+
     public static void generateNewKey() throws Exception{
             KeyPairGenerator gen = KeyPairGenerator.getInstance(KeyProperties.KEY_ALGORITHM_RSA, ANDROID_KEYSTORE);
 
