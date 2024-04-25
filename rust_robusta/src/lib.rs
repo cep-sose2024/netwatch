@@ -20,6 +20,13 @@ mod jni {
     use std::thread;
 
     #[derive(Signature, TryIntoJavaValue, IntoJavaValue, TryFromJavaValue)]
+    #[package(java.security.KeyPairGenerator)]
+    pub struct KeyPairGenerator<'env: 'borrow, 'borrow> {
+        #[instance]
+        raw: AutoLocal<'env, 'borrow>,
+    }
+
+    #[derive(Signature, TryIntoJavaValue, IntoJavaValue, TryFromJavaValue)]
     #[package(com.example.greetings)]
     pub struct CryptoLayer<'env: 'borrow, 'borrow> {
         #[instance]
@@ -27,29 +34,65 @@ mod jni {
     }
 
     impl<'env: 'borrow, 'borrow> CryptoLayer<'env, 'borrow> {
-        pub extern "jni" fn runRust(self, env: &JNIEnv) {
-            android_logger::init_once(
-                Config::default()
-                    .with_tag("RUST_ROBUSTA_ANDROID_EXAMPLE")
-                    .with_max_level(log::LevelFilter::Debug)
-                    .with_max_level(log::LevelFilter::Info),
-            );
+        pub extern "jni" fn genKeyInRust(
+            self,
+            env: &JNIEnv,
+            algorithm: String,
+            provider: String,
+        ) -> JniResult<String> {
+            let key_pair_generator_obj: JObject<'_> =
+                self.get_key_pair_generator(&env, algorithm, provider);
+            let key_pair_generator_string: JValue<'_> = env
+                .call_method(
+                    key_pair_generator_obj,
+                    "toString",
+                    "()Ljava/lang/String;",
+                    &[],
+                )
+                .unwrap();
 
-            info!("TEST START");
-            let java_class = env.find_class("com/example/greetings/CryptoLayer").unwrap();
+            let output = env
+                .get_string(robusta_jni::jni::objects::JString::from(
+                    key_pair_generator_string.l().unwrap(),
+                ))
+                .unwrap();
+            let output = output.to_str().unwrap().to_string();
+
+            Ok(output)
+        }
+
+        fn get_key_pair_generator(
+            &self,
+            env: &'env JNIEnv,
+            algorithm: String,
+            provider: String,
+        ) -> JObject<'env> {
+            let key_pair_generator_class =
+                env.find_class("java/security/KeyPairGenerator").unwrap();
             let _ = APP_CONTEXT.set((
                 env.get_java_vm().unwrap(),
-                env.new_global_ref(java_class).unwrap(),
+                env.new_global_ref(key_pair_generator_class).unwrap(),
             ));
 
-            let _ = CryptoLayer::generateNewKey(env);
-            let text = CryptoLayer::encryptText(env, String::from("Hello Rust")).unwrap();
-            debug!("encrypted text: {} ", text);
+            let rsa_string = env.new_string(algorithm).unwrap();
+            let android_key_store = env.new_string(provider).unwrap();
+            let rsa_jvalue = JValue::from(rsa_string);
+            let aks_jvalue = JValue::from(android_key_store);
+            let key_pair_generator_call = env.call_static_method(
+                "java/security/KeyPairGenerator",
+                "getInstance",
+                "(Ljava/lang/String;Ljava/lang/String;)Ljava/security/KeyPairGenerator;",
+                &[rsa_jvalue, aks_jvalue],
+            );
 
-            let decrypted = CryptoLayer::decryptText(env, text).unwrap();
-            debug!("decrypted text: {}", decrypted);
+            debug!(
+                "KeyPairGenerator.getInstance call OK: {}",
+                key_pair_generator_call.is_ok()
+            );
 
-            info!("TEST END");
+            let key_pair_generator_obj: JObject<'_> = key_pair_generator_call.unwrap().l().unwrap();
+
+            key_pair_generator_obj
         }
 
         pub extern "java" fn generateNewKey(env: &JNIEnv) -> JniResult<()> {}

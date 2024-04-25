@@ -1,6 +1,7 @@
 NDK/
 cargo-config.toml
-rust/target/
+target/
+Cargo.lock
 
 #built application files
 *.apk

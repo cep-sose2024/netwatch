@@ -48,7 +48,7 @@ class MainActivity : ComponentActivity() {
 //        val kp = kpg.generateKeyPair()
 
         RobustaAndroidExample.runRustExample(applicationContext)
-        CryptoLayer.runRust()
+        CryptoLayer.generateNewKey()
 
         Log.i("main", "executing RustGreetings")
         var g = RustGreetings()

@@ -24,10 +24,14 @@ public class CryptoLayer {
     public static final String ANDROID_KEYSTORE = "AndroidKeyStore";
     public static final String KEYNAME = "key123";
 
-    public static native void runRust();
+    public static native String genKeyInRust(String algorithm, String provider);
 
     public static void generateNewKey() throws Exception{
+            String  gen1 = genKeyInRust(KeyProperties.KEY_ALGORITHM_RSA, ANDROID_KEYSTORE);
+            Log.d("KeyPairGenerator_RUST", gen1);
+
             KeyPairGenerator gen = KeyPairGenerator.getInstance(KeyProperties.KEY_ALGORITHM_RSA, ANDROID_KEYSTORE);
+            Log.d("KeyPairGenerator_RUST", gen.toString());
 
             KeyGenParameterSpec spec = new KeyGenParameterSpec.Builder(
                 KEYNAME,
