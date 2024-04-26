@@ -1,3 +1,6 @@
+mod android_classes;
+mod crypto_layer;
+mod logger;
 pub(crate) mod thread_func;
 
 use robusta_jni::bridge;
@@ -9,96 +12,15 @@ static APP_CONTEXT: OnceLock<(JavaVM, GlobalRef)> = OnceLock::new();
 
 #[bridge]
 mod jni {
+    use crate::logger::init_android_logger;
     use crate::APP_CONTEXT;
-    use android_logger::Config;
-    use log::{debug, info};
+    use log::info;
     use robusta_jni::convert::{IntoJavaValue, Signature, TryFromJavaValue, TryIntoJavaValue};
     use robusta_jni::jni::errors::Result as JniResult;
     use robusta_jni::jni::objects::AutoLocal;
     use robusta_jni::jni::objects::{GlobalRef, JObject, JValue};
     use robusta_jni::jni::JNIEnv;
     use std::thread;
-
-    #[derive(Signature, TryIntoJavaValue, IntoJavaValue, TryFromJavaValue)]
-    #[package(java.security.KeyPairGenerator)]
-    pub struct KeyPairGenerator<'env: 'borrow, 'borrow> {
-        #[instance]
-        raw: AutoLocal<'env, 'borrow>,
-    }
-
-    #[derive(Signature, TryIntoJavaValue, IntoJavaValue, TryFromJavaValue)]
-    #[package(com.example.greetings)]
-    pub struct CryptoLayer<'env: 'borrow, 'borrow> {
-        #[instance]
-        raw: AutoLocal<'env, 'borrow>,
-    }
-
-    impl<'env: 'borrow, 'borrow> CryptoLayer<'env, 'borrow> {
-        pub extern "jni" fn genKeyInRust(
-            self,
-            env: &JNIEnv,
-            algorithm: String,
-            provider: String,
-        ) -> JniResult<String> {
-            let key_pair_generator_obj: JObject<'_> =
-                self.get_key_pair_generator(&env, algorithm, provider);
-            let key_pair_generator_string: JValue<'_> = env
-                .call_method(
-                    key_pair_generator_obj,
-                    "toString",
-                    "()Ljava/lang/String;",
-                    &[],
-                )
-                .unwrap();
-
-            let output = env
-                .get_string(robusta_jni::jni::objects::JString::from(
-                    key_pair_generator_string.l().unwrap(),
-                ))
-                .unwrap();
-            let output = output.to_str().unwrap().to_string();
-
-            Ok(output)
-        }
-
-        fn get_key_pair_generator(
-            &self,
-            env: &'env JNIEnv,
-            algorithm: String,
-            provider: String,
-        ) -> JObject<'env> {
-            let key_pair_generator_class =
-                env.find_class("java/security/KeyPairGenerator").unwrap();
-            let _ = APP_CONTEXT.set((
-                env.get_java_vm().unwrap(),
-                env.new_global_ref(key_pair_generator_class).unwrap(),
-            ));
-
-            let rsa_string = env.new_string(algorithm).unwrap();
-            let android_key_store = env.new_string(provider).unwrap();
-            let rsa_jvalue = JValue::from(rsa_string);
-            let aks_jvalue = JValue::from(android_key_store);
-            let key_pair_generator_call = env.call_static_method(
-                "java/security/KeyPairGenerator",
-                "getInstance",
-                "(Ljava/lang/String;Ljava/lang/String;)Ljava/security/KeyPairGenerator;",
-                &[rsa_jvalue, aks_jvalue],
-            );
-
-            debug!(
-                "KeyPairGenerator.getInstance call OK: {}",
-                key_pair_generator_call.is_ok()
-            );
-
-            let key_pair_generator_obj: JObject<'_> = key_pair_generator_call.unwrap().l().unwrap();
-
-            key_pair_generator_obj
-        }
-
-        pub extern "java" fn generateNewKey(env: &JNIEnv) -> JniResult<()> {}
-        pub extern "java" fn encryptText(env: &JNIEnv, text: String) -> JniResult<String> {}
-        pub extern "java" fn decryptText(env: &JNIEnv, text: String) -> JniResult<String> {}
-    }
 
     #[derive(Signature, TryIntoJavaValue, IntoJavaValue, TryFromJavaValue)]
     #[package(com.example.greetings)]
@@ -109,11 +31,7 @@ mod jni {
 
     impl<'env: 'borrow, 'borrow> RobustaAndroidExample<'env, 'borrow> {
         pub extern "jni" fn runRustExample(self, env: &JNIEnv, context: JObject<'env>) {
-            android_logger::init_once(
-                Config::default()
-                    .with_tag("RUST_ROBUSTA_ANDROID_EXAMPLE")
-                    .with_max_level(log::LevelFilter::Debug),
-            );
+            init_android_logger("RUST_ROBUSTA_ANDROID_EXAMPLE", None);
 
             info!("TEST START");
             let java_class = env
