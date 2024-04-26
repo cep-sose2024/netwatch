@@ -24,7 +24,7 @@ class MainActivity : ComponentActivity() {
 
     init {
         Log.i("init", "loading lib")
-        System.loadLibrary("rust")
+//        System.loadLibrary("rust")
         System.loadLibrary("rust_robusta")
     }
 
@@ -50,10 +50,10 @@ class MainActivity : ComponentActivity() {
 //        RobustaAndroidExample.runRustExample(applicationContext)
         CryptoLayer.generateNewKey()
 
-        Log.i("main", "executing RustGreetings")
-        var g = RustGreetings()
-        Log.i("main", "RustGreetings done")
-        var r = g.sayHello("world")
+//        Log.i("main", "executing RustGreetings")
+//        val g = RustGreetings()
+//        Log.i("main", "RustGreetings done")
+//        var r = g.sayHello("world")
 
 
         setContent {

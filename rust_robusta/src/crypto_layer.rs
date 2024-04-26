@@ -2,9 +2,9 @@ use robusta_jni::bridge;
 
 #[bridge]
 mod jni {
-    use crate::android_classes::builder::jni::Builder;
-    use crate::android_classes::key_pair_generator::jni::KeyPairGenerator;
-    use crate::android_classes::secure_random::jni::SecureRandom;
+    use crate::key_generation::builder::Builder;
+    use crate::key_generation::key_pair_generator::jni::KeyPairGenerator;
+    use crate::key_generation::secure_random::jni::SecureRandom;
     use crate::logger::init_android_logger;
     use log::{debug, error};
     use robusta_jni::convert::{IntoJavaValue, Signature, TryFromJavaValue, TryIntoJavaValue};
@@ -32,17 +32,14 @@ mod jni {
             let output = kpg.toString(env).unwrap();
             debug!("KeyPairGenerator.toString(): {}", output);
 
-            let builder = Builder::new(env, "test".to_string(), 1 | 2).unwrap();
-            let builder = Builder::setDigests(
-                env,
-                builder,
-                vec!["SHA-256".to_string(), "SHA-512".to_string()],
-            )
-            .unwrap();
-            let builder =
-                Builder::setEncryptionPaddings(env, builder, vec!["PKCS1Padding".to_string()])
-                    .unwrap();
-            let key_gen_param_spec = Builder::build(env, builder).unwrap();
+            let key_gen_param_spec = Builder::new(env, "test".to_string(), 1 | 2)
+                .unwrap()
+                .set_digests(env, vec!["SHA-256".to_string(), "SHA-512".to_string()])
+                .unwrap()
+                .set_encryption_paddings(env, vec!["PKCS1Padding".to_string()])
+                .unwrap()
+                .build(env)
+                .unwrap();
 
             let sr: SecureRandom<'_, '_> = SecureRandom::new(env).unwrap();
             let sr_alg = sr.getAlgorithm(env).unwrap();
