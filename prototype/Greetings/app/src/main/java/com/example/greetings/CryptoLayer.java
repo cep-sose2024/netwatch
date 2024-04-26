@@ -27,11 +27,13 @@ public class CryptoLayer {
 
     public static native String generateNewKeyRust(String algorithm, String provider);
 
+    public static native String encryptTextRust(String text);
+
     public static void generateNewKey() throws Exception {
         generateNewKeyRust(KeyProperties.KEY_ALGORITHM_RSA, ANDROID_KEYSTORE);
+        encryptTextRust("Hello, World!");
 
         KeyPairGenerator gen = KeyPairGenerator.getInstance(KeyProperties.KEY_ALGORITHM_RSA, ANDROID_KEYSTORE);
-        Log.d("KeyPairGenerator_RUST", gen.toString());
 
         KeyGenParameterSpec spec = new KeyGenParameterSpec.Builder(
                 KEYNAME,
@@ -48,6 +50,7 @@ public class CryptoLayer {
     public static String encryptText(String text) throws Exception {
         KeyStore keyStore = KeyStore.getInstance(ANDROID_KEYSTORE);
         keyStore.load(null);
+
         PrivateKey privateKey = (PrivateKey) keyStore.getKey(KEYNAME, null);
         PublicKey publicKey = keyStore.getCertificate(KEYNAME).getPublicKey();
 
@@ -59,6 +62,7 @@ public class CryptoLayer {
     }
 
     public static String decryptText(String text) throws Exception {
+        Log.d("TAG", "decryptText: " + text);
         byte[] encrypted = Base64.decode(text, Base64.URL_SAFE);
 
         KeyStore keyStore = KeyStore.getInstance(ANDROID_KEYSTORE);

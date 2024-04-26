@@ -100,7 +100,7 @@ fun EncryptTest() {
             label = { Text("Message") }
         )
         Button(onClick = {
-            encText = CryptoLayerRust.encryptText(text)
+            encText = CryptoLayer.encryptTextRust(text)
             Log.i("button", "Encrypted text: $encText")
         }) {
             Text("Encrypt")
@@ -111,7 +111,7 @@ fun EncryptTest() {
             enabled = false,
         )
         Button(onClick = {
-            var dec = CryptoLayerRust.decryptText(encText)
+            var dec = CryptoLayer.decryptText(encText)
             encText = dec
         }) {
             Text("Decrypt")

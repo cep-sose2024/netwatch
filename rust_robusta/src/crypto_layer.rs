@@ -5,7 +5,11 @@ mod jni {
     use crate::key_generation::builder::Builder;
     use crate::key_generation::key_pair_generator::jni::KeyPairGenerator;
     use crate::key_generation::secure_random::jni::SecureRandom;
+    use crate::key_store::cipher::jni::Cipher;
+    use crate::key_store::key_store::jni::KeyStore;
     use crate::logger::init_android_logger;
+    use base64::engine::general_purpose;
+    use base64::Engine;
     use log::{debug, error};
     use robusta_jni::convert::{IntoJavaValue, Signature, TryFromJavaValue, TryIntoJavaValue};
     use robusta_jni::jni::errors::Result as JniResult;
@@ -20,13 +24,42 @@ mod jni {
     }
 
     impl<'env: 'borrow, 'borrow> CryptoLayer<'env, 'borrow> {
+        pub extern "jni" fn encryptTextRust(self, env: &JNIEnv, text: String) -> JniResult<String> {
+            init_android_logger("RUST_ENCRYPT_TEXT", None);
+
+            let key_store = KeyStore::getInstance(env, "AndroidKeyStore".to_string()).unwrap();
+            let key_store_load = key_store.load(env, None);
+            debug!("KeyStore.load() OK: {}", key_store_load.is_ok());
+
+            let public_key = key_store
+                .getCertificate(env, "key123".to_string())
+                .unwrap()
+                .getPublicKey(env)
+                .unwrap();
+
+            let public_key_str = public_key.toString(env).unwrap();
+            debug!("PublicKey.toString(): {}", public_key_str);
+
+            let cipher = Cipher::getInstance(env, "RSA/ECB/PKCS1Padding".to_string()).unwrap();
+            let ciper_init = cipher.init(env, 1, public_key.raw.as_obj());
+            debug!("cipher.init() OK: {}", ciper_init.is_ok());
+
+            let text_bytes = text.clone().into_bytes();
+            let bytes = cipher.doFinal(env, text_bytes).unwrap();
+
+            let encrypted_text = general_purpose::URL_SAFE.encode(&bytes);
+            debug!("Encrypted text: {:?}", encrypted_text);
+
+            Ok(encrypted_text)
+        }
+
         pub extern "jni" fn generateNewKeyRust(
             self,
             env: &JNIEnv,
             algorithm: String,
             provider: String,
         ) -> JniResult<String> {
-            init_android_logger("KEY_GEN_TEST", None);
+            init_android_logger("RUST_GENERATE_NEW_KEY", None);
 
             let kpg = KeyPairGenerator::getInstance(env, algorithm, provider).unwrap();
             let output = kpg.toString(env).unwrap();

@@ -1,5 +1,6 @@
 mod crypto_layer;
 mod key_generation;
+mod key_store;
 mod logger;
 pub(crate) mod thread_func;
 
