@@ -1,0 +1,15 @@
+[package]
+name = "prototype_rust_wrapper"
+version = "0.1.0"
+edition = "2021"
+
+[lib]
+name = "prototype_rust_wrapper"
+crate-type = ["cdylib"]
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+jni = "0.21.1"
+bytemuck = "1.15.0"
+crypto-layer = { path = "../rust_crypto", features = ["tpm", "android"] }
