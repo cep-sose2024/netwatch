@@ -1,4 +1,3 @@
-#[allow(unused_imports)]
 use crate::{
     common::{
         crypto::{
@@ -8,14 +7,21 @@ use crate::{
             },
             KeyUsage,
         },
-        traits::{key_handle::KeyHandle, module_provider::Provider},
+        factory::SecurityModule,
     },
-    tpm::win::TpmProvider,
+    hsm::core::instance::HsmType,
+    tests::common::traits::setup_security_module,
+    tpm::core::instance::TpmType,
 };
+use test_case::test_matrix;
 
-#[test]
-fn test_sign_and_verify_rsa() {
-    let mut provider = TpmProvider::new("test_rsa_key".to_string());
+#[test_matrix(
+    [SecurityModule::Tpm(TpmType::Linux),
+     SecurityModule::Tpm(TpmType::Windows),
+     SecurityModule::Hsm(HsmType::NitroKey)]
+)]
+fn test_sign_and_verify_rsa(module: SecurityModule) {
+    let mut provider = setup_security_module(module);
 
     let key_algorithm = AsymmetricEncryption::Rsa(2048.into());
     let sym_algorithm = None;
@@ -35,9 +41,13 @@ fn test_sign_and_verify_rsa() {
     assert!(provider.verify_signature(data, &signature).unwrap());
 }
 
-#[test]
-fn test_sign_and_verify_ecdsa() {
-    let mut provider = TpmProvider::new("test_ecdsa_key".to_string());
+#[test_matrix(
+    [SecurityModule::Tpm(TpmType::Linux),
+     SecurityModule::Tpm(TpmType::Windows),
+     SecurityModule::Hsm(HsmType::NitroKey)]
+)]
+fn test_sign_and_verify_ecdsa(module: SecurityModule) {
+    let mut provider = setup_security_module(module);
 
     let key_algorithm = AsymmetricEncryption::Ecc(EccSchemeAlgorithm::EcDsa(EccCurves::Curve25519));
     let sym_algorithm = None;
@@ -57,9 +67,13 @@ fn test_sign_and_verify_ecdsa() {
     assert!(provider.verify_signature(data, &signature).unwrap());
 }
 
-#[test]
-fn test_encrypt_and_decrypt_rsa() {
-    let mut provider = TpmProvider::new("test_rsa_key".to_string());
+#[test_matrix(
+    [SecurityModule::Tpm(TpmType::Linux),
+     SecurityModule::Tpm(TpmType::Windows),
+     SecurityModule::Hsm(HsmType::NitroKey)]
+)]
+fn test_encrypt_and_decrypt_rsa(module: SecurityModule) {
+    let mut provider = setup_security_module(module);
 
     let key_algorithm = AsymmetricEncryption::Rsa(2048.into());
     let sym_algorithm = None;
@@ -82,9 +96,13 @@ fn test_encrypt_and_decrypt_rsa() {
     assert_eq!(data, decrypted_data.as_slice());
 }
 
-#[test]
-fn test_encrypt_and_decrypt_ecdh() {
-    let mut provider = TpmProvider::new("test_ecdh_key".to_string());
+#[test_matrix(
+    [SecurityModule::Tpm(TpmType::Linux),
+     SecurityModule::Tpm(TpmType::Windows),
+     SecurityModule::Hsm(HsmType::NitroKey)]
+)]
+fn test_encrypt_and_decrypt_ecdh(module: SecurityModule) {
+    let mut provider = setup_security_module(module);
 
     let key_algorithm = AsymmetricEncryption::Ecc(EccSchemeAlgorithm::EcDh(EccCurves::Curve25519));
     let sym_algorithm = Some(BlockCiphers::Aes(Default::default(), 256.into()));

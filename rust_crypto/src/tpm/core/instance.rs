@@ -37,8 +37,6 @@ pub enum TpmType {
 #[derive(Eq, Hash, PartialEq, Clone, Debug)]
 #[cfg(feature = "android")]
 pub enum AndroidTpmType {
-    /// Represents the default android Keystore implementation backed by a Secure Element or TEE
-    Keystore,
     /// Represents the Samsung Knox security platform with TPM functionalities.
     Knox,
 }
