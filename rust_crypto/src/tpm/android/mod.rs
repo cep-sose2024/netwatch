@@ -1,6 +1,7 @@
 pub mod knox;
 pub(crate) mod wrapper;
 
+use robusta_jni::jni::objects::JObject;
 use robusta_jni::jni::JavaVM;
 use tracing::{info, instrument};
 
@@ -121,7 +122,9 @@ impl KeyHandle for AndroidProvider {
         .unwrap();
         keystore.load(&env, None).unwrap();
 
-        let key = keystore.getKey(&env, "KEY".to_owned(), None).unwrap();
+        let key = keystore
+            .getKey(&env, "KEY".to_owned(), JObject::null())
+            .unwrap();
 
         let cipher = wrapper::key_store::cipher::jni::Cipher::getInstance(
             &env,

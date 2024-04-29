@@ -26,12 +26,6 @@ pub mod jni {
         pub extern "java" fn getAlgorithm(&self, _env: &JNIEnv) -> JniResult<String> {}
     }
 
-    impl<'env: 'borrow, 'borrow> From<Key<'env, 'borrow>> for PrivateKey<'env, 'borrow> {
-        fn from(key: Key<'env, 'borrow>) -> Self {
-            PrivateKey { raw: key.raw }
-        }
-    }
-
     #[derive(Signature, TryIntoJavaValue, IntoJavaValue, TryFromJavaValue)]
     #[package(java.security)]
     pub struct PrivateKey<'env: 'borrow, 'borrow> {

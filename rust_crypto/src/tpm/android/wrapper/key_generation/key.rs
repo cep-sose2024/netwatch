@@ -9,6 +9,13 @@ pub mod jni {
 
     #[derive(Signature, TryIntoJavaValue, IntoJavaValue, TryFromJavaValue)]
     #[package(java.security)]
+    pub struct Key<'env: 'borrow, 'borrow> {
+        #[instance]
+        pub raw: AutoLocal<'env, 'borrow>,
+    }
+
+    #[derive(Signature, TryIntoJavaValue, IntoJavaValue, TryFromJavaValue)]
+    #[package(java.security)]
     pub struct PublicKey<'env: 'borrow, 'borrow> {
         #[instance]
         pub raw: AutoLocal<'env, 'borrow>,
