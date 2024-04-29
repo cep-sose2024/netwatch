@@ -34,7 +34,6 @@ pub mod jni {
             &self,
             env: &JNIEnv,
             #[input_type("Ljava/security/spec/AlgorithmParameterSpec;")] params: JObject,
-            random: SecureRandom,
         ) -> JniResult<()> {
         }
 

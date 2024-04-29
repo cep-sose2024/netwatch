@@ -10,10 +10,10 @@ mod jni {
     use crate::logger::init_android_logger;
     use base64::engine::general_purpose;
     use base64::Engine;
-    use log::{debug, error};
+    use log::debug;
     use robusta_jni::convert::{IntoJavaValue, Signature, TryFromJavaValue, TryIntoJavaValue};
     use robusta_jni::jni::errors::Result as JniResult;
-    use robusta_jni::jni::objects::{AutoLocal, JValue};
+    use robusta_jni::jni::objects::AutoLocal;
     use robusta_jni::jni::JNIEnv;
 
     #[derive(Signature, TryIntoJavaValue, IntoJavaValue, TryFromJavaValue)]
