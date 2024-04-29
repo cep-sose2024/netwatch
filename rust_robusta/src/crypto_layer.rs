@@ -3,17 +3,18 @@ use robusta_jni::bridge;
 #[bridge]
 mod jni {
     use crate::key_generation::builder::Builder;
+    use crate::key_generation::key::jni::PrivateKey;
     use crate::key_generation::key_pair_generator::jni::KeyPairGenerator;
-    use crate::key_generation::secure_random::jni::SecureRandom;
     use crate::key_store::cipher::jni::Cipher;
     use crate::key_store::key_store::jni::KeyStore;
+    use crate::key_store::signature::jni::Signature as SignatureJni;
     use crate::logger::init_android_logger;
     use base64::engine::general_purpose;
     use base64::Engine;
-    use log::debug;
+    use log::{debug, error};
     use robusta_jni::convert::{IntoJavaValue, Signature, TryFromJavaValue, TryIntoJavaValue};
     use robusta_jni::jni::errors::Result as JniResult;
-    use robusta_jni::jni::objects::AutoLocal;
+    use robusta_jni::jni::objects::{AutoLocal, JObject};
     use robusta_jni::jni::JNIEnv;
 
     #[derive(Signature, TryIntoJavaValue, IntoJavaValue, TryFromJavaValue)]
@@ -24,6 +25,43 @@ mod jni {
     }
 
     impl<'env: 'borrow, 'borrow> CryptoLayer<'env, 'borrow> {
+        pub extern "jni" fn signDataRust(
+            self,
+            env: &JNIEnv,
+            data: String,
+            key_name: String,
+        ) -> JniResult<Box<[u8]>> {
+            init_android_logger("RUST_SIGN_DATA", None);
+
+            let key_store = KeyStore::getInstance(env, "AndroidKeyStore".to_string()).unwrap();
+            let key_store_load = key_store.load(env, None);
+            debug!("KeyStore.load() OK: {}", key_store_load.is_ok());
+
+            let private_key = key_store
+                .getKey(env, key_name.to_owned(), JObject::null())
+                .unwrap();
+
+            let signature = SignatureJni::getInstance(env, "SHA256withECDSA".to_string()).unwrap();
+            debug!("Signature: {}", signature.toString(env).unwrap());
+
+            let _ = signature.initSign(env, private_key.raw.as_obj());
+
+            let data_bytes = data.clone().into_bytes().into_boxed_slice();
+            match signature.update(env, data_bytes) {
+                Ok(_) => (),
+                Err(e) => error!("Error updating signature: {:?}", e),
+            }
+            debug!(
+                "Signature Initialized: {}",
+                signature.toString(env).unwrap()
+            );
+
+            let output = signature.sign(env).unwrap();
+            debug!("Signature: {:?}", output);
+
+            Ok(output)
+        }
+
         pub extern "jni" fn encryptTextRust(self, env: &JNIEnv, text: String) -> JniResult<String> {
             init_android_logger("RUST_ENCRYPT_TEXT", None);
 
@@ -56,8 +94,10 @@ mod jni {
         pub extern "jni" fn generateNewKeyRust(
             self,
             env: &JNIEnv,
+            key_name: String,
             algorithm: String,
             provider: String,
+            purposes: i32,
         ) -> JniResult<String> {
             init_android_logger("RUST_GENERATE_NEW_KEY", None);
 
@@ -65,7 +105,7 @@ mod jni {
             let output = kpg.toString(env).unwrap();
             debug!("KeyPairGenerator.toString(): {}", output);
 
-            let key_gen_param_spec = Builder::new(env, "test".to_string(), 1 | 2)
+            let key_gen_param_spec = Builder::new(env, key_name.to_string(), purposes)
                 .unwrap()
                 .set_digests(env, vec!["SHA-256".to_string(), "SHA-512".to_string()])
                 .unwrap()
@@ -74,11 +114,6 @@ mod jni {
                 .build(env)
                 .unwrap();
 
-            let sr: SecureRandom<'_, '_> = SecureRandom::new(env).unwrap();
-            let sr_alg = sr.getAlgorithm(env).unwrap();
-            debug!("SecureRandom algorithm: {}", sr_alg);
-
-            // let digests = key_gen_param_spec.getDigests(env);
             let key_gen_param_spec_obj = key_gen_param_spec.raw.as_obj();
 
             let _ = kpg.initialize(env, key_gen_param_spec_obj);
@@ -100,8 +135,5 @@ mod jni {
 
             Ok("output".to_string())
         }
-
-        pub extern "java" fn encryptText(env: &JNIEnv, text: String) -> JniResult<String> {}
-        pub extern "java" fn decryptText(env: &JNIEnv, text: String) -> JniResult<String> {}
     }
 }

@@ -9,6 +9,13 @@ pub mod jni {
 
     #[derive(Signature, TryIntoJavaValue, IntoJavaValue, TryFromJavaValue)]
     #[package(java.security)]
+    pub struct Key<'env: 'borrow, 'borrow> {
+        #[instance]
+        pub raw: AutoLocal<'env, 'borrow>,
+    }
+
+    #[derive(Signature, TryIntoJavaValue, IntoJavaValue, TryFromJavaValue)]
+    #[package(java.security)]
     pub struct PublicKey<'env: 'borrow, 'borrow> {
         #[instance]
         pub raw: AutoLocal<'env, 'borrow>,
@@ -17,6 +24,12 @@ pub mod jni {
     impl<'env: 'borrow, 'borrow> PublicKey<'env, 'borrow> {
         pub extern "java" fn toString(&self, _env: &JNIEnv) -> JniResult<String> {}
         pub extern "java" fn getAlgorithm(&self, _env: &JNIEnv) -> JniResult<String> {}
+    }
+
+    impl<'env: 'borrow, 'borrow> From<Key<'env, 'borrow>> for PrivateKey<'env, 'borrow> {
+        fn from(key: Key<'env, 'borrow>) -> Self {
+            PrivateKey { raw: key.raw }
+        }
     }
 
     #[derive(Signature, TryIntoJavaValue, IntoJavaValue, TryFromJavaValue)]

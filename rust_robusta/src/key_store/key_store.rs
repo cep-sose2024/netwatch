@@ -2,7 +2,7 @@ use robusta_jni::bridge;
 
 #[bridge]
 pub mod jni {
-    use crate::key_generation::key::jni::PublicKey;
+    use crate::key_generation::key::jni::{Key, PublicKey};
     use robusta_jni::{
         convert::{IntoJavaValue, Signature, TryFromJavaValue, TryIntoJavaValue},
         jni::{
@@ -24,6 +24,14 @@ pub mod jni {
             env: &'borrow JNIEnv<'env>,
             type1: String,
         ) -> JniResult<Self> {
+        }
+
+        pub extern "java" fn getKey(
+            &self,
+            env: &'borrow JNIEnv<'env>,
+            alias: String,
+            #[input_type("[C")] password: JObject,
+        ) -> JniResult<Key> {
         }
 
         pub extern "java" fn getCertificate(

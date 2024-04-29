@@ -1,6 +1,8 @@
 package com.example.greetings
 
+import android.R.attr.data
 import android.os.Bundle
+import android.security.keystore.KeyProperties
 import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -48,7 +50,27 @@ class MainActivity : ComponentActivity() {
 //        val kp = kpg.generateKeyPair()
 
 //        RobustaAndroidExample.runRustExample(applicationContext)
-        CryptoLayer.generateNewKey()
+
+//        val keyName = "key123"
+//        CryptoLayer.generateNewKeyRust(
+//            keyName,
+//            KeyProperties.KEY_ALGORITHM_RSA,
+//            CryptoLayer.ANDROID_KEYSTORE,
+//            KeyProperties.PURPOSE_ENCRYPT or KeyProperties.PURPOSE_DECRYPT
+//        )
+
+        val keySignName = "keySign123";
+        CryptoLayer.generateNewKeyRust(
+            keySignName,
+            KeyProperties.KEY_ALGORITHM_EC,
+            CryptoLayer.ANDROID_KEYSTORE,
+            KeyProperties.PURPOSE_SIGN or KeyProperties.PURPOSE_VERIFY
+        )
+
+        val signature = CryptoLayer.signDataRust("Hello World", keySignName)
+        Log.i("main", "Signature: $signature")
+        val verified = CryptoLayer.verifyData("Hello World", signature, keySignName)
+        Log.i("main", "Verified: $verified")
 
 //        Log.i("main", "executing RustGreetings")
 //        val g = RustGreetings()
