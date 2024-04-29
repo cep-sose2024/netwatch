@@ -25,7 +25,7 @@ class MainActivity : ComponentActivity() {
     init {
         Log.i("init", "loading lib")
 //        System.loadLibrary("rust")
-        System.loadLibrary("rust_robusta")
+        System.loadLibrary("rust")
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -100,7 +100,7 @@ fun EncryptTest() {
             label = { Text("Message") }
         )
         Button(onClick = {
-            encText = CryptoLayer.encryptTextRust(text)
+            encText = CryptoLayerRust.encryptText(text)
             Log.i("button", "Encrypted text: $encText")
         }) {
             Text("Encrypt")
@@ -111,7 +111,7 @@ fun EncryptTest() {
             enabled = false,
         )
         Button(onClick = {
-            var dec = CryptoLayer.decryptText(encText)
+            var dec = CryptoLayerRust.decryptText(encText)
             encText = dec
         }) {
             Text("Decrypt")

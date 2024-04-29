@@ -2,7 +2,9 @@ use robusta_jni::bridge;
 
 #[bridge]
 pub mod jni {
-    use crate::key_generation::{key_pair::jni::KeyPair, secure_random::jni::SecureRandom};
+    use crate::tpm::android::wrapper::key_generation::{
+        key_pair::jni::KeyPair, secure_random::jni::SecureRandom,
+    };
     use robusta_jni::{
         convert::{IntoJavaValue, Signature, TryFromJavaValue, TryIntoJavaValue},
         jni::{
@@ -34,7 +36,6 @@ pub mod jni {
             &self,
             env: &JNIEnv,
             #[input_type("Ljava/security/spec/AlgorithmParameterSpec;")] params: JObject,
-            random: SecureRandom,
         ) -> JniResult<()> {
         }
 

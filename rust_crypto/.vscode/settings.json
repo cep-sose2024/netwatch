@@ -1,22 +1,4 @@
 {
-    "[jsonc]": {
-        "editor.defaultFormatter": "esbenp.prettier-vscode"
-    },
-    "[json]": {
-        "editor.defaultFormatter": "esbenp.prettier-vscode"
-    },
-    "[javascript]": {
-        "editor.defaultFormatter": "esbenp.prettier-vscode"
-    },
-    "[typescript]": {
-        "editor.defaultFormatter": "esbenp.prettier-vscode"
-    },
-    "[yaml]": {
-        "editor.defaultFormatter": "esbenp.prettier-vscode"
-    },
-    "[markdown]": {
-        "editor.defaultFormatter": "esbenp.prettier-vscode"
-    },
     "editor.formatOnSave": true,
     "editor.formatOnPaste": true,
     "files.autoSave": "off",
@@ -26,5 +8,9 @@
     "editor.codeActionsOnSave": {
         "source.organizeImports": "explicit"
     },
-    "files.eol": "\n"
+    "files.eol": "\n",
+    "rust-analyzer.cargo.features": [
+        "tpm",
+        "android"
+    ]
 }

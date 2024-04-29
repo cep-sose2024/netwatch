@@ -39,6 +39,7 @@ pub enum TpmType {
 pub enum AndroidTpmType {
     /// Represents the Samsung Knox security platform with TPM functionalities.
     Knox,
+    Keystore,
 }
 
 /// Provides a default `TpmType` based on the compile-time target operating system.
@@ -123,7 +124,13 @@ impl TpmInstance {
                 Arc::new(Mutex::new(instance))
             }
             #[cfg(feature = "android")]
-            TpmType::Android(_tpm_type) => todo!(),
+            TpmType::Android(tpm_type) => match tpm_type {
+                AndroidTpmType::Keystore => Arc::new(Mutex::new(
+                    crate::tpm::android::AndroidProvider::new(key_id),
+                )),
+                AndroidTpmType::Knox => todo!(),
+            },
+
             TpmType::None => todo!(),
         }
     }
