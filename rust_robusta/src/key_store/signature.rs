@@ -2,12 +2,12 @@ use robusta_jni::bridge;
 
 #[bridge]
 pub mod jni {
-    use log::debug;
+    use crate::key_store::key_store::jni::Certificate;
     use robusta_jni::{
         convert::{IntoJavaValue, Signature as JavaSignature, TryFromJavaValue, TryIntoJavaValue},
         jni::{
             errors::Result as JniResult,
-            objects::{AutoLocal, JObject, JString, JValue},
+            objects::{AutoLocal, JObject, JValue},
             JNIEnv,
         },
     };
@@ -36,16 +36,6 @@ pub mod jni {
         }
 
         pub fn initSign(&self, env: &JNIEnv, privateKey: JObject) -> JniResult<()> {
-            let class_obj =
-                env.call_method(self.raw.as_obj(), "getClass", "()Ljava/lang/Class;", &[])?;
-            let class_name =
-                env.call_method(class_obj.l()?, "getName", "()Ljava/lang/String;", &[])?;
-            let class_name: String = env
-                .get_string(JString::from(class_name.l()?))
-                .unwrap()
-                .into();
-            debug!("Object class: {}", class_name);
-
             env.call_method(
                 self.raw.as_obj(),
                 "initSign",
@@ -56,7 +46,22 @@ pub mod jni {
             Ok(())
         }
 
+        pub fn initVerify(&self, env: &JNIEnv, certificate: Certificate) -> JniResult<()> {
+            let certificate_obj = certificate.raw.as_obj();
+
+            env.call_method(
+                self.raw.as_obj(),
+                "initVerify",
+                "(Ljava/security/cert/Certificate;)V",
+                &[JValue::from(JObject::from(certificate_obj))],
+            )?;
+
+            Ok(())
+        }
+        pub extern "java" fn verify(&self, _env: &JNIEnv, signature: Box<[u8]>) -> JniResult<bool> {
+        }
+
+        pub extern "java" fn update(&self, _env: &JNIEnv, data: Box<[u8]>) -> JniResult<()> {}
         pub extern "java" fn toString(&self, _env: &JNIEnv) -> JniResult<String> {}
-        pub extern "java" fn update(&self, env: &JNIEnv, data: Box<[u8]>) -> JniResult<()> {}
     }
 }

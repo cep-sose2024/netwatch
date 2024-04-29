@@ -27,7 +27,7 @@ class MainActivity : ComponentActivity() {
     init {
         Log.i("init", "loading lib")
 //        System.loadLibrary("rust")
-        System.loadLibrary("rust")
+        System.loadLibrary("rust_robusta")
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -69,7 +69,7 @@ class MainActivity : ComponentActivity() {
 
         val signature = CryptoLayer.signDataRust("Hello World", keySignName)
         Log.i("main", "Signature: $signature")
-        val verified = CryptoLayer.verifyData("Hello World", signature, keySignName)
+        val verified = CryptoLayer.verifyDataRust("Hello World", signature, keySignName)
         Log.i("main", "Verified: $verified")
 
 //        Log.i("main", "executing RustGreetings")

@@ -36,7 +36,7 @@ public class CryptoLayer {
 
     public static native byte[] signDataRust(String data, String keyName);
 
-    public static native boolean verifyDataRust(String data, String signature);
+    public static native boolean verifyDataRust(String data, byte[] signature, String keyName);
 
     public static void generateNewKey(String keyName) throws Exception {
         KeyPairGenerator gen = KeyPairGenerator.getInstance(KeyProperties.KEY_ALGORITHM_RSA, ANDROID_KEYSTORE);

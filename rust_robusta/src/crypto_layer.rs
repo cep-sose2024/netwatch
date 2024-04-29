@@ -3,7 +3,6 @@ use robusta_jni::bridge;
 #[bridge]
 mod jni {
     use crate::key_generation::builder::Builder;
-    use crate::key_generation::key::jni::PrivateKey;
     use crate::key_generation::key_pair_generator::jni::KeyPairGenerator;
     use crate::key_store::cipher::jni::Cipher;
     use crate::key_store::key_store::jni::KeyStore;
@@ -25,6 +24,40 @@ mod jni {
     }
 
     impl<'env: 'borrow, 'borrow> CryptoLayer<'env, 'borrow> {
+        pub extern "jni" fn verifyDataRust(
+            self,
+            env: &JNIEnv,
+            data: String,
+            signature: Box<[u8]>,
+            key_name: String,
+        ) -> JniResult<bool> {
+            let key_store = KeyStore::getInstance(env, "AndroidKeyStore".to_string()).unwrap();
+            let key_store_load = key_store.load(env, None);
+            debug!("KeyStore.load() OK: {}", key_store_load.is_ok());
+
+            let s = SignatureJni::getInstance(env, "SHA256withECDSA".to_string()).unwrap();
+            debug!("Signature: {}", s.toString(env).unwrap());
+
+            let cert = key_store.getCertificate(env, key_name.to_owned()).unwrap();
+
+            s.initVerify(env, cert).map_err(|e| {
+                error!("Error initializing verification: {:?}", e);
+                e
+            })?;
+
+            let data_bytes = data.clone().into_bytes().into_boxed_slice();
+            match s.update(env, data_bytes) {
+                Ok(_) => (),
+                Err(e) => error!("Error updating signature: {:?}", e),
+            }
+            debug!("Signature Init: {}", s.toString(env).unwrap());
+
+            let output = s.verify(env, signature).unwrap();
+            debug!("Signature: {:?}", output);
+
+            Ok(output)
+        }
+
         pub extern "jni" fn signDataRust(
             self,
             env: &JNIEnv,
@@ -41,22 +74,19 @@ mod jni {
                 .getKey(env, key_name.to_owned(), JObject::null())
                 .unwrap();
 
-            let signature = SignatureJni::getInstance(env, "SHA256withECDSA".to_string()).unwrap();
-            debug!("Signature: {}", signature.toString(env).unwrap());
+            let s = SignatureJni::getInstance(env, "SHA256withECDSA".to_string()).unwrap();
+            debug!("Signature: {}", s.toString(env).unwrap());
 
-            let _ = signature.initSign(env, private_key.raw.as_obj());
+            let _ = s.initSign(env, private_key.raw.as_obj());
 
             let data_bytes = data.clone().into_bytes().into_boxed_slice();
-            match signature.update(env, data_bytes) {
+            match s.update(env, data_bytes) {
                 Ok(_) => (),
                 Err(e) => error!("Error updating signature: {:?}", e),
             }
-            debug!(
-                "Signature Initialized: {}",
-                signature.toString(env).unwrap()
-            );
+            debug!("Signature Init: {}", s.toString(env).unwrap());
 
-            let output = signature.sign(env).unwrap();
+            let output = s.sign(env).unwrap();
             debug!("Signature: {:?}", output);
 
             Ok(output)
