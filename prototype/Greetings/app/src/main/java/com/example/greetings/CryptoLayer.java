@@ -15,9 +15,11 @@ import java.security.NoSuchAlgorithmException;
 import java.security.PrivateKey;
 import java.security.PublicKey;
 import java.security.SecureRandom;
+import java.security.Signature;
 import java.security.spec.AlgorithmParameterSpec;
 import java.security.spec.ECGenParameterSpec;
 import java.security.spec.RSAKeyGenParameterSpec;
+import java.util.Enumeration;
 
 import javax.crypto.Cipher;
 
@@ -28,6 +30,7 @@ public class CryptoLayer {
     public static native String generateNewKeyRust(String algorithm, String provider);
 
     public static native String encryptTextRust(String text);
+
 
     public static void generateNewKey() throws Exception {
         generateNewKeyRust(KeyProperties.KEY_ALGORITHM_RSA, ANDROID_KEYSTORE);
@@ -75,5 +78,40 @@ public class CryptoLayer {
 
         byte[] decrypted = cipher.doFinal(encrypted);
         return new String(decrypted, StandardCharsets.UTF_8);
+    }
+
+    /*
+     * Use a PrivateKey in the KeyStore to create a signature over
+     * some data.
+     */
+    public static byte[] signData(String data) throws Exception {
+        KeyStore ks = KeyStore.getInstance(ANDROID_KEYSTORE);
+        ks.load(null);
+
+        KeyStore.Entry entry = ks.getEntry(KEYNAME, null);
+        if (!(entry instanceof KeyStore.PrivateKeyEntry)) {
+            Log.w("TAG", "Not an instance of a PrivateKeyEntry");
+            return null;
+        }
+        Signature s = Signature.getInstance("SHA256withECDSA");
+        s.initSign(((KeyStore.PrivateKeyEntry) entry).getPrivateKey());
+        s.update(data.getBytes());
+        return s.sign();
+    }
+
+    /*
+     * Verify a signature previously made by a private key in the
+     * KeyStore. This uses the X.509 certificate attached to the
+     * private key in the KeyStore to validate a previously
+     * generated signature.
+     */
+    public static boolean verifyData(String data, byte[] signature) throws Exception {
+        KeyStore ks = KeyStore.getInstance(ANDROID_KEYSTORE);
+        ks.load(null);
+
+        Signature s = Signature.getInstance("SHA256withECDSA");
+        s.initVerify(ks.getCertificate(KEYNAME));
+        s.update(data.getBytes());
+        return s.verify(signature);
     }
 }

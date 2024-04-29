@@ -81,28 +81,7 @@ mod jni {
             // let digests = key_gen_param_spec.getDigests(env);
             let key_gen_param_spec_obj = key_gen_param_spec.raw.as_obj();
 
-            if let Err(e) = env.call_method(
-                kpg.raw.as_obj(),
-                "initialize",
-                "(Ljava/security/spec/AlgorithmParameterSpec;Ljava/security/SecureRandom;)V",
-                &[
-                    JValue::Object(key_gen_param_spec_obj),
-                    JValue::Object(sr.raw.as_obj()),
-                ],
-            ) {
-                error!("Couldn't call method via classic JNI: {}", e);
-                if env.exception_check().unwrap_or(false) {
-                    let ex = env.exception_occurred().unwrap();
-                    let _ = env.exception_clear();
-                    let res = env
-                        .call_method(ex, "toString", "()Ljava/lang/String;", &[])
-                        .unwrap()
-                        .l()
-                        .unwrap();
-                    let ex_msg: String = env.get_string(Into::into(res)).unwrap().into();
-                    error!("check_jni_error: {}", ex_msg);
-                }
-            }
+            let _ = kpg.initialize(env, key_gen_param_spec_obj);
 
             let output = kpg.getAlgorithm(env).unwrap();
             debug!("KeyPairGenerator.getAlgorithm(): {}", output);
