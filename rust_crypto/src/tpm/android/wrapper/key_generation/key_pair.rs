@@ -2,7 +2,7 @@ use robusta_jni::bridge;
 
 #[bridge]
 pub mod jni {
-    use crate::key_generation::key::jni::{PrivateKey, PublicKey};
+    use crate::tpm::android::wrapper::key_generation::key::jni::{PrivateKey, PublicKey};
     use robusta_jni::{
         convert::{IntoJavaValue, Signature, TryFromJavaValue, TryIntoJavaValue},
         jni::{errors::Result as JniResult, objects::AutoLocal, JNIEnv},

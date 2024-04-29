@@ -19,7 +19,7 @@ pub unsafe extern "C" fn Java_com_example_greetings_RustGreetings_generateNewKey
     _env: JNIEnv,
     _: JClass,
 ) {
-    let provider = SecModules::get_instances(
+    let provider = SecModules::get_instance(
         "KEY".to_owned(),
         SecurityModule::Tpm(TpmType::Android(
             crypto_layer::tpm::core::instance::AndroidTpmType::Keystore,
@@ -28,14 +28,15 @@ pub unsafe extern "C" fn Java_com_example_greetings_RustGreetings_generateNewKey
     .expect("keystore provider not found");
 
     let mut provider = provider.lock().unwrap();
-    provider.initialize_module().unwrap();
+    
     let key_usage = vec![
         KeyUsage::Decrypt,
         KeyUsage::SignEncrypt,
         KeyUsage::CreateX509,
     ];
     let algorithm = AsymmetricEncryption::Rsa(algorithms::KeyBits::Bits512);
-    provider.create_key("KEY", algorithm, None, None, key_usage).expect("can't create key");
+    provider.initialize_module(algorithm, None, None, key_usage).unwrap();
+    provider.create_key("KEY").expect("can't create key");
 }
 
 #[no_mangle]
@@ -52,7 +53,7 @@ pub unsafe extern "C" fn Java_com_example_greetings_RustGreetings_encrypt(
     // the bytes are i8 right now, we need to reinterpret them to u8
     let bytes = bytemuck::cast_slice::<i8, u8>(bytes.as_slice());
 
-    let provider = SecModules::get_instances(
+    let provider = SecModules::get_instance(
         "KEY".to_owned(),
         SecurityModule::Tpm(TpmType::Android(
             crypto_layer::tpm::core::instance::AndroidTpmType::Keystore,
@@ -68,8 +69,9 @@ pub unsafe extern "C" fn Java_com_example_greetings_RustGreetings_encrypt(
         KeyUsage::CreateX509,
     ];
     let algorithm = AsymmetricEncryption::Rsa(algorithms::KeyBits::Bits512);
+    provider.initialize_module(algorithm, None, None, key_usage).unwrap();
     provider
-        .load_key("KEY", algorithm, None, None, key_usage)
+        .load_key("KEY")
         .unwrap();
 
     let bytes = provider.encrypt_data(bytes).expect("encryption failed");
@@ -98,7 +100,7 @@ pub unsafe extern "C" fn Java_com_example_greetings_RustGreetings_decrypt(
     // the bytes are i8 right now, we need to reinterpret them to u8
     let bytes = bytemuck::cast_slice::<i8, u8>(bytes.as_slice());
 
-    let provider = SecModules::get_instances(
+    let provider = SecModules::get_instance(
         "KEY".to_owned(),
         SecurityModule::Tpm(TpmType::Android(
             crypto_layer::tpm::core::instance::AndroidTpmType::Keystore,
@@ -114,11 +116,12 @@ pub unsafe extern "C" fn Java_com_example_greetings_RustGreetings_decrypt(
         KeyUsage::CreateX509,
     ];
     let algorithm = AsymmetricEncryption::Rsa(algorithms::KeyBits::Bits512);
+    provider.initialize_module(algorithm, None, None, key_usage).unwrap();
     provider
-        .load_key("KEY", algorithm, None, None, key_usage)
+        .load_key("KEY")
         .unwrap();
 
-    let bytes = provider.encrypt_data(bytes).expect("encryption failed");
+    let bytes = provider.decrypt_data(bytes).expect("encryption failed");
 
     // now we need to turn them back into i8
     let bytes = bytemuck::cast_slice::<u8, i8>(bytes.as_slice());

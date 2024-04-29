@@ -10,7 +10,7 @@ use std::{
 };
 use tracing::Level;
 use tracing_appender::rolling;
-use tracing_subscriber::FmtSubscriber;
+use tracing_subscriber::{layer::SubscriberExt, FmtSubscriber, Registry};
 
 type ProviderArc = Arc<Mutex<dyn Provider>>;
 type SecurityModuleMap = HashMap<SecurityModule, ProviderArc>;
@@ -80,7 +80,7 @@ impl SecModules {
         key_id: String,
         module: SecurityModule,
     ) -> Option<Arc<Mutex<dyn Provider>>> {
-        // Initialize logging once
+        //Initialize logging once
         if !*LOGGING.lock().unwrap() {
             SecModules::setup_logging();
         }
@@ -97,12 +97,7 @@ impl SecModules {
 
     /// Initial logging setup
     fn setup_logging() {
-        let file_appender = rolling::daily("./logs", "output.log");
-        let (non_blocking, _guard) = tracing_appender::non_blocking(file_appender);
-        let subscriber = FmtSubscriber::builder()
-            .with_max_level(Level::TRACE)
-            .with_writer(non_blocking)
-            .finish();
+        let subscriber = Registry::default().with(tracing_android::layer("RUST").unwrap());
         tracing::subscriber::set_global_default(subscriber)
             .expect("setting default subscriber failed");
         *LOGGING.lock().unwrap() = true;
