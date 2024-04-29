@@ -3,7 +3,7 @@ pub(crate) mod wrapper;
 
 use robusta_jni::jni::objects::JObject;
 use robusta_jni::jni::JavaVM;
-use tracing::{info, instrument};
+use tracing::{debug, error, info, instrument};
 
 use crate::common::crypto::algorithms::hashes::Hash;
 use crate::common::crypto::KeyUsage;
@@ -13,6 +13,8 @@ use crate::common::{
     crypto::algorithms::encryption::{AsymmetricEncryption, BlockCiphers},
     traits::module_provider::Provider,
 };
+use crate::tpm::android::wrapper::key_store::key_store::jni::KeyStore;
+use crate::tpm::android::wrapper::key_store::signature::jni::Signature;
 
 use self::wrapper::get_java_vm;
 
@@ -63,18 +65,19 @@ impl Provider for AndroidProvider {
         info!("generating key!");
         let env = self.vm.as_ref().unwrap().get_env().unwrap();
 
-        let kps = wrapper::key_generation::builder::Builder::new(&env, "KEY".to_owned(), 1 | 2)
-            .unwrap()
-            .set_digests(&env, vec!["SHA-256".to_owned(), "SHA-512".to_owned()])
-            .unwrap()
-            .set_encryption_paddings(&env, vec!["PKCS1Padding".to_owned()])
-            .unwrap()
-            .build(&env)
-            .unwrap();
+        let kps =
+            wrapper::key_generation::builder::Builder::new(&env, key_id.to_owned(), 1 | 2 | 4 | 8)
+                .unwrap()
+                .set_digests(&env, vec!["SHA-256".to_owned(), "SHA-512".to_owned()])
+                .unwrap()
+                .set_encryption_paddings(&env, vec!["PKCS1Padding".to_owned()])
+                .unwrap()
+                .build(&env)
+                .unwrap();
 
         let kpg = wrapper::key_generation::key_pair_generator::jni::KeyPairGenerator::getInstance(
             &env,
-            "RSA".to_owned(),
+            "EC".to_owned(),
             "AndroidKeyStore".to_owned(),
         )
         .unwrap();
@@ -109,7 +112,32 @@ impl Provider for AndroidProvider {
 
 impl KeyHandle for AndroidProvider {
     fn sign_data(&self, data: &[u8]) -> Result<Vec<u8>, SecurityModuleError> {
-        todo!()
+        let env = self.vm.as_ref().unwrap().get_env().unwrap();
+
+        let key_store = KeyStore::getInstance(&env, "AndroidKeyStore".to_string()).unwrap();
+        let key_store_load = key_store.load(&env, None);
+        debug!("KeyStore.load() OK: {}", key_store_load.is_ok());
+
+        let private_key = key_store
+            .getKey(&env, "KEY SIGN".to_owned(), JObject::null())
+            .unwrap();
+
+        let s = Signature::getInstance(&env, "SHA256withECDSA".to_string()).unwrap();
+        debug!("Signature: {}", s.toString(&env).unwrap());
+
+        let _ = s.initSign(&env, private_key.raw.as_obj());
+
+        let data_bytes = data.to_vec().into_boxed_slice();
+        match s.update(&env, data_bytes) {
+            Ok(_) => (),
+            Err(e) => error!("Error updating signature: {:?}", e),
+        }
+        debug!("Signature Init: {}", s.toString(&env).unwrap());
+
+        let output = s.sign(&env).unwrap();
+        debug!("Signature: {:?}", output);
+
+        Ok(output)
     }
 
     fn decrypt_data(&self, encrypted_data: &[u8]) -> Result<Vec<u8>, SecurityModuleError> {
@@ -123,7 +151,7 @@ impl KeyHandle for AndroidProvider {
         keystore.load(&env, None).unwrap();
 
         let key = keystore
-            .getKey(&env, "KEY".to_owned(), JObject::null())
+            .getKey(&env, self.key_id.to_owned(), JObject::null())
             .unwrap();
 
         let cipher = wrapper::key_store::cipher::jni::Cipher::getInstance(
@@ -150,7 +178,7 @@ impl KeyHandle for AndroidProvider {
         keystore.load(&env, None).unwrap();
 
         let key = keystore
-            .getCertificate(&env, "KEY".to_owned())
+            .getCertificate(&env, self.key_id.to_owned())
             .expect("ECode4")
             .getPublicKey(&env)
             .expect("ECode5");
@@ -168,12 +196,37 @@ impl KeyHandle for AndroidProvider {
         Ok(encrypted)
     }
 
-    fn verify_signature(
-        &self,
-        _data: &[u8],
-        _signature: &[u8],
-    ) -> Result<bool, SecurityModuleError> {
-        todo!()
+    fn verify_signature(&self, data: &[u8], signature: &[u8]) -> Result<bool, SecurityModuleError> {
+        let env = self.vm.as_ref().expect("ECode1").get_env().expect("ECode2");
+
+        let key_store = KeyStore::getInstance(&env, "AndroidKeyStore".to_string()).unwrap();
+        let key_store_load = key_store.load(&env, None);
+        debug!("KeyStore.load() OK: {}", key_store_load.is_ok());
+
+        let s = Signature::getInstance(&env, "SHA256withECDSA".to_string()).unwrap();
+        debug!("Signature: {}", s.toString(&env).unwrap());
+
+        let cert = key_store
+            .getCertificate(&env, "KEY SIGN".to_owned())
+            .unwrap();
+
+        match s.initVerify(&env, cert) {
+            Ok(_) => (),
+            Err(e) => error!("Error initializing verification: {:?}", e),
+        }
+
+        let data_bytes = data.to_vec().into_boxed_slice();
+        match s.update(&env, data_bytes) {
+            Ok(_) => (),
+            Err(e) => error!("Error updating signature: {:?}", e),
+        }
+        debug!("Signature Init: {}", s.toString(&env).unwrap());
+
+        let signature_boxed = signature.to_vec().into_boxed_slice();
+        let output = s.verify(&env, signature_boxed).unwrap();
+        debug!("Signature: {:?}", output);
+
+        Ok(output)
     }
 }
 

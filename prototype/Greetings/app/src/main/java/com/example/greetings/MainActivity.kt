@@ -1,8 +1,6 @@
 package com.example.greetings
 
-import android.R.attr.data
 import android.os.Bundle
-import android.security.keystore.KeyProperties
 import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -26,8 +24,8 @@ class MainActivity : ComponentActivity() {
 
     init {
         Log.i("init", "loading lib")
-//        System.loadLibrary("rust")
-        System.loadLibrary("rust_robusta")
+        System.loadLibrary("prototype_rust_wrapper")
+//        System.loadLibrary("rust_robusta")
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -60,17 +58,17 @@ class MainActivity : ComponentActivity() {
 //        )
 
         val keySignName = "keySign123";
-        CryptoLayer.generateNewKeyRust(
-            keySignName,
-            KeyProperties.KEY_ALGORITHM_EC,
-            CryptoLayer.ANDROID_KEYSTORE,
-            KeyProperties.PURPOSE_SIGN or KeyProperties.PURPOSE_VERIFY
-        )
+//        CryptoLayer.generateNewKeyRust(
+//            keySignName,
+//            KeyProperties.KEY_ALGORITHM_EC,
+//            CryptoLayer.ANDROID_KEYSTORE,
+//            KeyProperties.PURPOSE_SIGN or KeyProperties.PURPOSE_VERIFY
+//        )
 
-        val signature = CryptoLayer.signDataRust("Hello World", keySignName)
-        Log.i("main", "Signature: $signature")
-        val verified = CryptoLayer.verifyDataRust("Hello World", signature, keySignName)
-        Log.i("main", "Verified: $verified")
+//        val signature = CryptoLayer.signDataRust("Hello World", keySignName)
+//        Log.i("main", "Signature: $signature")
+//        val verified = CryptoLayer.verifyDataRust("Hello World", signature, keySignName)
+//        Log.i("main", "Verified: $verified")
 
 //        Log.i("main", "executing RustGreetings")
 //        val g = RustGreetings()
@@ -87,8 +85,9 @@ class MainActivity : ComponentActivity() {
                 ) {
                     Column {
                         Greeting(name = "j&s-soft")
-                        GenerateKeyButton()
+                        GenerateEncryptionKeyButton()
                         EncryptTest()
+                        GenerateSigningKeyButton()
                     }
                 }
             }
@@ -105,9 +104,23 @@ fun Greeting(name: String, modifier: Modifier = Modifier) {
 }
 
 @Composable
-fun GenerateKeyButton() {
-    Button(onClick = { CryptoLayerRust.generateNewKey() }) {
-        Text("Generate")
+fun GenerateEncryptionKeyButton() {
+    Button(onClick = { CryptoLayerRust.generateNewKey("KEY") }) {
+        Text("Generate Encryption Key")
+    }
+}
+
+@Composable
+fun GenerateSigningKeyButton() {
+    Button(onClick = { CryptoLayerRust.generateNewKey("KEY SIGN") }) {
+        Text("Generate Signing Key")
+    }
+}
+
+@Composable
+fun SignDataButton() {
+    Button(onClick = { CryptoLayerRust.generateNewKey("KEY SIGN") }) {
+        Text("Generate Signing Key")
     }
 }
 
@@ -115,6 +128,8 @@ fun GenerateKeyButton() {
 fun EncryptTest() {
     var text by remember { mutableStateOf("Hello World") }
     var encText by remember { mutableStateOf("") }
+    var signatureText by remember { mutableStateOf("") }
+    var verificationStatus by remember { mutableStateOf("") }
     Column {
         TextField(
             value = text,
@@ -133,10 +148,29 @@ fun EncryptTest() {
             enabled = false,
         )
         Button(onClick = {
-            var dec = CryptoLayerRust.decryptText(encText)
+            val dec = CryptoLayerRust.decryptText(encText)
             encText = dec
         }) {
             Text("Decrypt")
         }
+        TextField(
+            value = signatureText,
+            onValueChange = {},
+            enabled = false,
+            label = { Text("Signature") }
+        )
+        Button(onClick = {
+            val signature = CryptoLayerRust.signText(encText)
+            signatureText = signature
+        }) {
+            Text("Sign")
+        }
+        Button(onClick = {
+            val verified = CryptoLayerRust.verifyText(encText, signatureText)
+            verificationStatus = if (verified) "Verified" else "Not Verified"
+        }) {
+            Text("Verify Signature")
+        }
+        Text(text = verificationStatus)
     }
 }

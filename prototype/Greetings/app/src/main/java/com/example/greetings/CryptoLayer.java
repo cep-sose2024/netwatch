@@ -20,6 +20,7 @@ import java.security.Signature;
 import java.security.spec.AlgorithmParameterSpec;
 import java.security.spec.ECGenParameterSpec;
 import java.security.spec.RSAKeyGenParameterSpec;
+import java.util.Arrays;
 import java.util.Enumeration;
 
 import javax.crypto.Cipher;
@@ -76,14 +77,8 @@ public class CryptoLayer {
 
         Cipher cipher = Cipher.getInstance("RSA/ECB/PKCS1Padding");
         byte[] encrypted;
-        try {
-            cipher.init(Cipher.ENCRYPT_MODE, publicKey);
-            encrypted = cipher.doFinal(text.getBytes());
-        } catch (InvalidKeyException e) {
-            // Handle the exception here. For example:
-            Log.e("CryptoLayer", "The key does not support encryption.", e);
-            return "Djuroslav";
-        }
+        cipher.init(Cipher.ENCRYPT_MODE, publicKey);
+        encrypted = cipher.doFinal(text.getBytes());
 
         return Base64.encodeToString(encrypted, Base64.URL_SAFE);
     }
@@ -91,13 +86,7 @@ public class CryptoLayer {
     public static String decryptText(String text) throws Exception {
         Log.d("TAG", "decryptText: " + text);
         byte[] encrypted;
-        try {
-            encrypted = Base64.decode(text, Base64.URL_SAFE);
-        } catch (IllegalArgumentException e) {
-            // Handle the exception here. For example:
-            Log.e("CryptoLayer", "Invalid base64 input.", e);
-            return "Djuroslav";
-        }
+        encrypted = Base64.decode(text, Base64.URL_SAFE);
 
         KeyStore keyStore = KeyStore.getInstance(ANDROID_KEYSTORE);
         keyStore.load(null);

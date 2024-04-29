@@ -26,13 +26,13 @@ pub mod jni {
         ) -> JniResult<Self> {
         }
 
-        pub fn sign(&self, env: &JNIEnv) -> JniResult<Box<[u8]>> {
+        pub fn sign(&self, env: &JNIEnv) -> JniResult<Vec<u8>> {
             let result = env.call_method(self.raw.as_obj(), "sign", "()[B", &[])?;
 
             let byte_array = result.l()?.into_inner();
             let output = env.convert_byte_array(byte_array)?;
 
-            Ok(output.into_boxed_slice())
+            Ok(output)
         }
 
         pub fn initSign(&self, env: &JNIEnv, privateKey: JObject) -> JniResult<()> {
