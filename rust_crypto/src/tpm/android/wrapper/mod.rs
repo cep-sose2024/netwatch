@@ -23,7 +23,12 @@ pub(super) fn get_java_vm() -> Result<JavaVM, TpmError> {
     ) -> jint;
     pub const JNI_GET_JAVA_VMS_NAME: &[u8] = b"JNI_GetCreatedJavaVMs";
 
+    #[cfg(unix)]
     let lib = libloading::os::unix::Library::this();
+
+    #[cfg(windows)]
+    let lib = libloading::os::windows::Library::this().unwrap();
+
     let get_created_java_vms: JniGetCreatedJavaVms =
         unsafe { *lib.get(JNI_GET_JAVA_VMS_NAME).unwrap() };
 
