@@ -22,7 +22,7 @@ pub unsafe extern "C" fn Java_com_example_greetings_RustGreetings_generateNewKey
 ) {
     let key_id: String = env.get_string(&key_id).expect("Couldn't get key ID").into();
     let provider = SecModules::get_instance(
-        key_id.clone(),
+        "KEY".to_owned(),
         SecurityModule::Tpm(TpmType::Android(
             crypto_layer::tpm::core::instance::AndroidTpmType::Keystore,
         )),
@@ -40,9 +40,7 @@ pub unsafe extern "C" fn Java_com_example_greetings_RustGreetings_generateNewKey
     provider
         .initialize_module(algorithm, None, None, key_usage)
         .unwrap();
-    provider
-        .create_key(&key_id.as_str())
-        .expect("can't create key");
+    provider.create_key("KEY").expect("can't create key");
 }
 
 #[no_mangle]

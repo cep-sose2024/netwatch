@@ -105,7 +105,7 @@ fun Greeting(name: String, modifier: Modifier = Modifier) {
 
 @Composable
 fun GenerateEncryptionKeyButton() {
-    Button(onClick = { CryptoLayerRust.generateNewKey("KEY") }) {
+    Button(onClick = { CryptoLayerRust.generateNewKey("KEY123") }) {
         Text("Generate Encryption Key")
     }
 }

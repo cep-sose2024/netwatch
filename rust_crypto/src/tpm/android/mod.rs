@@ -77,7 +77,7 @@ impl Provider for AndroidProvider {
 
         let kpg = wrapper::key_generation::key_pair_generator::jni::KeyPairGenerator::getInstance(
             &env,
-            "EC".to_owned(),
+            "RSA".to_owned(),
             "AndroidKeyStore".to_owned(),
         )
         .unwrap();
@@ -168,6 +168,8 @@ impl KeyHandle for AndroidProvider {
 
     fn encrypt_data(&self, data: &[u8]) -> Result<Vec<u8>, SecurityModuleError> {
         let env = self.vm.as_ref().expect("ECode1").get_env().expect("ECode2");
+
+        info!("CRYPTO_LAYER: encrypt_data call");
 
         let keystore = wrapper::key_store::key_store::jni::KeyStore::getInstance(
             &env,
