@@ -58,6 +58,7 @@ impl AndroidProvider {
 }
 
 impl Provider for AndroidProvider {
+    #[instrument]
     fn create_key(
         &mut self,
         key_id: &str,
@@ -90,10 +91,12 @@ impl Provider for AndroidProvider {
     }
 
     /// As a Provider can only hold one Key, there is no need to load a key,
+    #[instrument]
     fn load_key(&mut self, key_id: &str) -> Result<(), crate::common::error::SecurityModuleError> {
         Ok(())
     }
 
+    #[instrument]
     fn initialize_module(
         &mut self,
         key_algorithm: AsymmetricEncryption,
@@ -111,6 +114,7 @@ impl Provider for AndroidProvider {
 }
 
 impl KeyHandle for AndroidProvider {
+    #[instrument]
     fn sign_data(&self, data: &[u8]) -> Result<Vec<u8>, SecurityModuleError> {
         let env = self.vm.as_ref().unwrap().get_env().unwrap();
 
@@ -125,9 +129,10 @@ impl KeyHandle for AndroidProvider {
         let s = Signature::getInstance(&env, "SHA256withECDSA".to_string()).unwrap();
         debug!("Signature: {}", s.toString(&env).unwrap());
 
-        let _ = s.initSign(&env, private_key.raw.as_obj());
+        s.initSign(&env, private_key.raw.as_obj()).unwrap();
 
         let data_bytes = data.to_vec().into_boxed_slice();
+
         match s.update(&env, data_bytes) {
             Ok(_) => (),
             Err(e) => error!("Error updating signature: {:?}", e),
@@ -140,6 +145,7 @@ impl KeyHandle for AndroidProvider {
         Ok(output)
     }
 
+    #[instrument]
     fn decrypt_data(&self, encrypted_data: &[u8]) -> Result<Vec<u8>, SecurityModuleError> {
         let env = self.vm.as_ref().unwrap().get_env().unwrap();
 
@@ -166,6 +172,7 @@ impl KeyHandle for AndroidProvider {
         Ok(decrypted)
     }
 
+    #[instrument]
     fn encrypt_data(&self, data: &[u8]) -> Result<Vec<u8>, SecurityModuleError> {
         let env = self.vm.as_ref().expect("ECode1").get_env().expect("ECode2");
 
@@ -198,6 +205,7 @@ impl KeyHandle for AndroidProvider {
         Ok(encrypted)
     }
 
+    #[instrument]
     fn verify_signature(&self, data: &[u8], signature: &[u8]) -> Result<bool, SecurityModuleError> {
         let env = self.vm.as_ref().expect("ECode1").get_env().expect("ECode2");
 
