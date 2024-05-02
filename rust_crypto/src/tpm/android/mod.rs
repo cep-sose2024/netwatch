@@ -108,7 +108,7 @@ impl Provider for AndroidProvider {
         self.sym_algo = sym_algorithm;
         self.hash = hash;
         self.key_usages = Some(key_usages);
-        self.vm = Some(get_java_vm().map_err(|e| SecurityModuleError::Tpm(e))?);
+        self.vm = Some(get_java_vm().map_err(SecurityModuleError::Tpm)?);
         Ok(())
     }
 }

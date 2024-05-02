@@ -33,7 +33,7 @@ pub(super) fn get_java_vm() -> Result<JavaVM, TpmError> {
         unsafe { *lib.get(JNI_GET_JAVA_VMS_NAME).unwrap() };
 
     // now that we have the function, we can call it
-    let mut buffer = [0 as *mut jni::sys::JavaVM; 1];
+    let mut buffer = [std::ptr::null_mut::<jni::sys::JavaVM>(); 1];
     let buffer_ptr = buffer.as_mut_ptr();
     let mut found_vms = 0;
     let found_vm_ptr = &mut found_vms as *mut i32;
