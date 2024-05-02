@@ -43,7 +43,7 @@ jobs:
       - name: Build with Jekyll
         # Outputs to the './_site' directory by default
         #run: bundle exec jekyll build --baseurl "/netwatch"
-        run: bundle exec jekyll build --baseurl "/netwatch/docs"
+        run: bundle exec jekyll build --baseurl "/cep-sose2024/netwatch"
         env:
           JEKYLL_ENV: production
       - name: Upload artifact
