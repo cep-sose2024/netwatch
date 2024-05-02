@@ -1,11 +1,3 @@
----
-title: "Crypto Layer on Architecture"
-date: 2024-04-30 00:00:00 +0800
-categories: [Architecture]
-tags: [crypto layer, hsm]
-mermaid: true
----
-
 # Architecture
 
 ```mermaid
@@ -23,8 +15,7 @@ flowchart TB
     AndroidProvider --> KeystoreWrapper
     KeystoreWrapper --> KeystoreAPI
     KeystoreAPI --> HSM
-       
-    
+
     style KeystoreAPI fill:#99cc99,stroke:#333,stroke-width:2px;
     style HSM fill:#99cc99,stroke:#333,stroke-width:2px;
     style CryptoAbstractionLayer fill:#FFFF99,stroke:#333,stroke-width:2px,fontColor:#000000;
