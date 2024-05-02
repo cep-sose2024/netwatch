@@ -1,13 +1,17 @@
 repos:
   - hooks:
       - id: commitizen
+        args: ['--manifest-path', 'prototype_rust_wrapper/Cargo.toml']
         stages:
           - commit-msg
     repo: https://github.com/commitizen-tools/commitizen
     rev: v2.24.0
   - hooks:
       - id: fmt
+        args: ['--manifest-path', 'prototype_rust_wrapper/Cargo.toml']
       - id: cargo-check
+        args: ['--manifest-path', 'prototype_rust_wrapper/Cargo.toml']
       - id: clippy
+        args: ['--manifest-path', 'prototype_rust_wrapper/Cargo.toml']
     repo: https://github.com/doublify/pre-commit-rust
     rev: v1.0
