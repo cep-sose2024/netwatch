@@ -53,7 +53,7 @@ pub mod jni {
                 self.raw.as_obj(),
                 "initVerify",
                 "(Ljava/security/cert/Certificate;)V",
-                &[JValue::from(JObject::from(certificate_obj))],
+                &[JValue::from(certificate_obj)],
             )?;
 
             Ok(())
