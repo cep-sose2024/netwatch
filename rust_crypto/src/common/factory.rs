@@ -8,9 +8,7 @@ use std::{
     collections::HashMap,
     sync::{Arc, Mutex},
 };
-use tracing::Level;
-use tracing_appender::rolling;
-use tracing_subscriber::{layer::SubscriberExt, FmtSubscriber, Registry};
+use tracing_subscriber::{layer::SubscriberExt, Registry};
 
 type ProviderArc = Arc<Mutex<dyn Provider>>;
 type SecurityModuleMap = HashMap<SecurityModule, ProviderArc>;

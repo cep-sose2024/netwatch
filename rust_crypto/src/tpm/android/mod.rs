@@ -1,9 +1,10 @@
+pub(crate) mod error;
 pub mod knox;
 pub(crate) mod wrapper;
 
 use robusta_jni::jni::objects::JObject;
 use robusta_jni::jni::JavaVM;
-use tracing::{debug, error, info, instrument};
+use tracing::{debug, info, instrument};
 
 use crate::common::crypto::algorithms::hashes::Hash;
 use crate::common::crypto::KeyUsage;
@@ -15,8 +16,12 @@ use crate::common::{
 };
 use crate::tpm::android::wrapper::key_store::key_store::jni::KeyStore;
 use crate::tpm::android::wrapper::key_store::signature::jni::Signature;
+use crate::tpm::core::error::ToTpmError;
+use crate::tpm::core::error::TpmError;
 
 use self::wrapper::get_java_vm;
+
+const ANDROID_KEYSTORE: &str = "AndroidKeyStore";
 
 /// A TPM-based cryptographic provider for managing cryptographic keys and performing
 /// cryptographic operations in a Windows environment.
@@ -59,40 +64,48 @@ impl AndroidProvider {
 
 impl Provider for AndroidProvider {
     #[instrument]
-    fn create_key(
-        &mut self,
-        key_id: &str,
-    ) -> Result<(), crate::common::error::SecurityModuleError> {
+    fn create_key(&mut self, key_id: &str) -> Result<(), SecurityModuleError> {
         info!("generating key!");
-        let env = self.vm.as_ref().unwrap().get_env().unwrap();
+        let env = self
+            .vm
+            .as_ref()
+            .ok_or_else(|| TpmError::InitializationError("Module is not initialized".to_owned()))?
+            .get_env()
+            .map_err(|_| {
+                TpmError::InitializationError(
+                    "Could not get java environment, this should never happen".to_owned(),
+                )
+            })?;
 
         let kps =
             wrapper::key_generation::builder::Builder::new(&env, key_id.to_owned(), 1 | 2 | 4 | 8)
-                .unwrap()
+                .err_internal()?
                 .set_digests(&env, vec!["SHA-256".to_owned(), "SHA-512".to_owned()])
-                .unwrap()
+                .err_internal()?
                 .set_encryption_paddings(&env, vec!["PKCS1Padding".to_owned()])
-                .unwrap()
+                .err_internal()?
                 .build(&env)
-                .unwrap();
+                .err_internal()?;
 
         let kpg = wrapper::key_generation::key_pair_generator::jni::KeyPairGenerator::getInstance(
             &env,
             "RSA".to_owned(),
-            "AndroidKeyStore".to_owned(),
+            ANDROID_KEYSTORE.to_owned(),
         )
-        .unwrap();
+        .err_internal()?;
 
-        kpg.initialize(&env, kps.raw.as_obj()).unwrap();
+        kpg.initialize(&env, kps.raw.as_obj()).err_internal()?;
 
-        kpg.generateKeyPair(&env).unwrap();
+        kpg.generateKeyPair(&env).err_internal()?;
+
+        debug!("key generated");
 
         Ok(())
     }
 
-    /// As a Provider can only hold one Key, there is no need to load a key,
+    /// As a Provider can only hold one Key, there is no need to load a key
     #[instrument]
-    fn load_key(&mut self, key_id: &str) -> Result<(), crate::common::error::SecurityModuleError> {
+    fn load_key(&mut self, key_id: &str) -> Result<(), SecurityModuleError> {
         Ok(())
     }
 
@@ -108,7 +121,7 @@ impl Provider for AndroidProvider {
         self.sym_algo = sym_algorithm;
         self.hash = hash;
         self.key_usages = Some(key_usages);
-        self.vm = Some(get_java_vm().map_err(SecurityModuleError::Tpm)?);
+        self.vm = Some(get_java_vm()?);
         Ok(())
     }
 }
@@ -116,30 +129,33 @@ impl Provider for AndroidProvider {
 impl KeyHandle for AndroidProvider {
     #[instrument]
     fn sign_data(&self, data: &[u8]) -> Result<Vec<u8>, SecurityModuleError> {
-        let env = self.vm.as_ref().unwrap().get_env().unwrap();
+        info!("signing data");
+        let env = self
+            .vm
+            .as_ref()
+            .ok_or_else(|| TpmError::InitializationError("Module is not initialized".to_owned()))?
+            .get_env()
+            .map_err(|_| {
+                TpmError::InitializationError(
+                    "Could not get java environment, this should never happen".to_owned(),
+                )
+            })?;
 
-        let key_store = KeyStore::getInstance(&env, "AndroidKeyStore".to_string()).unwrap();
-        let key_store_load = key_store.load(&env, None);
-        debug!("KeyStore.load() OK: {}", key_store_load.is_ok());
+        let key_store = KeyStore::getInstance(&env, ANDROID_KEYSTORE.to_string()).err_internal()?;
 
         let private_key = key_store
             .getKey(&env, "KEY SIGN".to_owned(), JObject::null())
-            .unwrap();
+            .err_internal()?;
 
-        let s = Signature::getInstance(&env, "SHA256withECDSA".to_string()).unwrap();
-        debug!("Signature: {}", s.toString(&env).unwrap());
+        let s = Signature::getInstance(&env, "SHA256withECDSA".to_string()).err_internal()?;
 
-        s.initSign(&env, private_key.raw.as_obj()).unwrap();
+        s.initSign(&env, private_key.raw.as_obj()).err_internal()?;
 
         let data_bytes = data.to_vec().into_boxed_slice();
 
-        match s.update(&env, data_bytes) {
-            Ok(_) => (),
-            Err(e) => error!("Error updating signature: {:?}", e),
-        }
-        debug!("Signature Init: {}", s.toString(&env).unwrap());
+        s.update(&env, data_bytes).err_internal()?;
 
-        let output = s.sign(&env).unwrap();
+        let output = s.sign(&env).err_internal()?;
         debug!("Signature: {:?}", output);
 
         Ok(output)
@@ -147,94 +163,117 @@ impl KeyHandle for AndroidProvider {
 
     #[instrument]
     fn decrypt_data(&self, encrypted_data: &[u8]) -> Result<Vec<u8>, SecurityModuleError> {
-        let env = self.vm.as_ref().unwrap().get_env().unwrap();
+        info!("decrypting data");
+        let env = self
+            .vm
+            .as_ref()
+            .ok_or_else(|| TpmError::InitializationError("Module is not initialized".to_owned()))?
+            .get_env()
+            .map_err(|_| {
+                TpmError::InitializationError(
+                    "Could not get java environment, this should never happen".to_owned(),
+                )
+            })?;
 
         let keystore = wrapper::key_store::key_store::jni::KeyStore::getInstance(
             &env,
-            "AndroidKeyStore".to_owned(),
+            ANDROID_KEYSTORE.to_owned(),
         )
-        .unwrap();
-        keystore.load(&env, None).unwrap();
+        .err_internal()?;
+        keystore.load(&env, None).err_internal()?;
 
         let key = keystore
             .getKey(&env, self.key_id.to_owned(), JObject::null())
-            .unwrap();
+            .err_internal()?;
 
         let cipher = wrapper::key_store::cipher::jni::Cipher::getInstance(
             &env,
             "RSA/ECB/PKCS1Padding".to_owned(),
         )
-        .unwrap();
-        cipher.init(&env, 2, key.raw.as_obj()).unwrap();
+        .err_internal()?;
+        cipher.init(&env, 2, key.raw.as_obj()).err_internal()?;
 
-        let decrypted = cipher.doFinal(&env, encrypted_data.to_vec()).unwrap();
+        let decrypted = cipher
+            .doFinal(&env, encrypted_data.to_vec())
+            .err_internal()?;
 
+        debug!("decrypted");
         Ok(decrypted)
     }
 
     #[instrument]
     fn encrypt_data(&self, data: &[u8]) -> Result<Vec<u8>, SecurityModuleError> {
-        let env = self.vm.as_ref().expect("ECode1").get_env().expect("ECode2");
-
-        info!("CRYPTO_LAYER: encrypt_data call");
+        info!("encrypting");
+        let env = self
+            .vm
+            .as_ref()
+            .ok_or_else(|| TpmError::InitializationError("Module is not initialized".to_owned()))?
+            .get_env()
+            .map_err(|_| {
+                TpmError::InitializationError(
+                    "Could not get java environment, this should never happen".to_owned(),
+                )
+            })?;
 
         let keystore = wrapper::key_store::key_store::jni::KeyStore::getInstance(
             &env,
-            "AndroidKeyStore".to_owned(),
+            ANDROID_KEYSTORE.to_owned(),
         )
-        .expect("ECode3");
+        .err_internal()?;
 
-        keystore.load(&env, None).unwrap();
+        keystore.load(&env, None).err_internal()?;
 
         let key = keystore
             .getCertificate(&env, self.key_id.to_owned())
-            .expect("ECode4")
+            .err_internal()?
             .getPublicKey(&env)
-            .expect("ECode5");
+            .err_internal()?;
 
         let cipher = wrapper::key_store::cipher::jni::Cipher::getInstance(
             &env,
             "RSA/ECB/PKCS1Padding".to_owned(),
         )
-        .expect("ECode6");
+        .err_internal()?;
 
-        cipher.init(&env, 1, key.raw.as_obj()).expect("ECode7");
+        cipher.init(&env, 1, key.raw.as_obj()).err_internal()?;
 
-        let encrypted = cipher.doFinal(&env, data.to_vec()).expect("ECode8");
+        let encrypted = cipher.doFinal(&env, data.to_vec()).err_internal()?;
 
+        debug!("encrypted: {:?}", encrypted);
         Ok(encrypted)
     }
 
     #[instrument]
     fn verify_signature(&self, data: &[u8], signature: &[u8]) -> Result<bool, SecurityModuleError> {
-        let env = self.vm.as_ref().expect("ECode1").get_env().expect("ECode2");
+        info!("verifiying");
+        let env = self
+            .vm
+            .as_ref()
+            .ok_or_else(|| TpmError::InitializationError("Module is not initialized".to_owned()))?
+            .get_env()
+            .map_err(|_| {
+                TpmError::InitializationError(
+                    "Could not get java environment, this should never happen".to_owned(),
+                )
+            })?;
 
-        let key_store = KeyStore::getInstance(&env, "AndroidKeyStore".to_string()).unwrap();
-        let key_store_load = key_store.load(&env, None);
-        debug!("KeyStore.load() OK: {}", key_store_load.is_ok());
+        let key_store = KeyStore::getInstance(&env, ANDROID_KEYSTORE.to_string()).err_internal()?;
+        key_store.load(&env, None).err_internal()?;
 
-        let s = Signature::getInstance(&env, "SHA256withECDSA".to_string()).unwrap();
-        debug!("Signature: {}", s.toString(&env).unwrap());
+        let s = Signature::getInstance(&env, "SHA256withECDSA".to_string()).err_internal()?;
 
         let cert = key_store
             .getCertificate(&env, "KEY SIGN".to_owned())
-            .unwrap();
+            .err_internal()?;
 
-        match s.initVerify(&env, cert) {
-            Ok(_) => (),
-            Err(e) => error!("Error initializing verification: {:?}", e),
-        }
+        s.initVerify(&env, cert).err_internal()?;
 
         let data_bytes = data.to_vec().into_boxed_slice();
-        match s.update(&env, data_bytes) {
-            Ok(_) => (),
-            Err(e) => error!("Error updating signature: {:?}", e),
-        }
-        debug!("Signature Init: {}", s.toString(&env).unwrap());
+        s.update(&env, data_bytes).err_internal()?;
 
         let signature_boxed = signature.to_vec().into_boxed_slice();
-        let output = s.verify(&env, signature_boxed).unwrap();
-        debug!("Signature: {:?}", output);
+        let output = s.verify(&env, signature_boxed).err_internal()?;
+        debug!("Signature verified: {:?}", output);
 
         Ok(output)
     }

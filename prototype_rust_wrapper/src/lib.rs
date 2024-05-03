@@ -1,13 +1,11 @@
 use core::panic;
-use std::{any::Any, panic::catch_unwind};
 
 use crypto_layer::{
     common::{
         crypto::{
             algorithms::{self, encryption::AsymmetricEncryption},
             KeyUsage,
-        },
-        factory::{SecModules, SecurityModule},
+        }, error::SecurityModuleError, factory::{SecModules, SecurityModule}
     },
     tpm::core::instance::TpmType,
 };
@@ -18,6 +16,28 @@ use jni::{
 };
 use tracing::error;
 
+fn generate_new_key() -> Result<(), SecurityModuleError> {
+    let provider = SecModules::get_instance(
+        "KEY".to_owned(),
+        SecurityModule::Tpm(TpmType::Android(
+            crypto_layer::tpm::core::instance::AndroidTpmType::Keystore,
+        )),
+    ).ok_or(SecurityModuleError::InitializationError("couldn't create key provider".to_owned()))?;
+
+    let mut provider = provider.lock().unwrap();
+
+    let key_usage = vec![
+        KeyUsage::Decrypt,
+        KeyUsage::SignEncrypt,
+        KeyUsage::CreateX509,
+    ];
+    let algorithm = AsymmetricEncryption::Rsa(algorithms::KeyBits::Bits512);
+    provider
+        .initialize_module(algorithm, None, None, key_usage)?;
+    provider.create_key("KEY")?;
+    Ok(())
+}
+
 #[no_mangle]
 pub unsafe extern "C" fn Java_com_example_greetings_RustGreetings_generateNewKey(
     mut env: JNIEnv,
@@ -25,32 +45,36 @@ pub unsafe extern "C" fn Java_com_example_greetings_RustGreetings_generateNewKey
     key_id: JString,
 ) {
     let key_id: String = env.get_string(&key_id).expect("Couldn't get key ID").into();
-    let catch_res = catch_unwind(|| {
-        let provider = SecModules::get_instance(
-            "KEY".to_owned(),
-            SecurityModule::Tpm(TpmType::Android(
-                crypto_layer::tpm::core::instance::AndroidTpmType::Keystore,
-            )),
-        )
-        .expect("keystore provider not found");
 
-        let mut provider = provider.lock().unwrap();
-
-        let key_usage = vec![
-            KeyUsage::Decrypt,
-            KeyUsage::SignEncrypt,
-            KeyUsage::CreateX509,
-        ];
-        let algorithm = AsymmetricEncryption::Rsa(algorithms::KeyBits::Bits512);
-        provider
-            .initialize_module(algorithm, None, None, key_usage)
-            .unwrap();
-        provider.create_key("KEY").expect("can't create key");
-    });
-
-    if let Err(e) = catch_res {
+    if let Err(e) = generate_new_key() {
         handle_error(&mut env, e);
     }
+}
+
+fn encrypt(bytes: &[u8]) -> Result<Vec<u8>, SecurityModuleError> {
+    let provider = SecModules::get_instance(
+        "KEY".to_owned(),
+        SecurityModule::Tpm(TpmType::Android(
+            crypto_layer::tpm::core::instance::AndroidTpmType::Keystore,
+        )),
+    )
+    .ok_or(SecurityModuleError::InitializationError("couldn't create key provider".to_owned()))?;
+
+    let mut provider = provider.lock().unwrap();
+
+    let key_usage = vec![
+        KeyUsage::Decrypt,
+        KeyUsage::SignEncrypt,
+        KeyUsage::CreateX509,
+    ];
+    let algorithm = AsymmetricEncryption::Rsa(algorithms::KeyBits::Bits512);
+    provider
+        .initialize_module(algorithm, None, None, key_usage)?;
+    provider.load_key("KEY").unwrap();
+
+    let bytes = provider.encrypt_data(bytes)?;
+
+    return Ok(bytes);
 }
 
 #[no_mangle]
@@ -67,34 +91,7 @@ pub unsafe extern "C" fn Java_com_example_greetings_RustGreetings_encrypt(
     // the bytes are i8 right now, we need to reinterpret them to u8
     let bytes = bytemuck::cast_slice::<i8, u8>(bytes.as_slice());
 
-    let catch_res = catch_unwind(|| {
-        let provider = SecModules::get_instance(
-            "KEY".to_owned(),
-            SecurityModule::Tpm(TpmType::Android(
-                crypto_layer::tpm::core::instance::AndroidTpmType::Keystore,
-            )),
-        )
-        .expect("keystore provider not found");
-
-        let mut provider = provider.lock().unwrap();
-
-        let key_usage = vec![
-            KeyUsage::Decrypt,
-            KeyUsage::SignEncrypt,
-            KeyUsage::CreateX509,
-        ];
-        let algorithm = AsymmetricEncryption::Rsa(algorithms::KeyBits::Bits512);
-        provider
-            .initialize_module(algorithm, None, None, key_usage)
-            .unwrap();
-        provider.load_key("KEY").unwrap();
-
-        let bytes = provider.encrypt_data(bytes).expect("encryption failed");
-
-        return bytes;
-    });
-
-    match catch_res {
+    match encrypt(bytes) {
         Ok(bytes) => {
             // now we need to turn them back into i8
             let bytes = bytemuck::cast_slice::<u8, i8>(bytes.as_slice());
@@ -112,6 +109,31 @@ pub unsafe extern "C" fn Java_com_example_greetings_RustGreetings_encrypt(
     }
 }
 
+fn decrypt(bytes: &[u8]) -> Result<Vec<u8>, SecurityModuleError> {
+    let provider = SecModules::get_instance(
+        "KEY".to_owned(),
+        SecurityModule::Tpm(TpmType::Android(
+            crypto_layer::tpm::core::instance::AndroidTpmType::Keystore,
+        )),
+    )
+    .ok_or(SecurityModuleError::InitializationError("couldn't create key provider".to_owned()))?;
+
+    let mut provider = provider.lock().unwrap();
+
+    let key_usage = vec![
+        KeyUsage::Decrypt,
+        KeyUsage::SignEncrypt,
+        KeyUsage::CreateX509,
+    ];
+    let algorithm = AsymmetricEncryption::Rsa(algorithms::KeyBits::Bits512);
+    provider
+        .initialize_module(algorithm, None, None, key_usage)?;
+    provider.load_key("KEY")?;
+
+    let bytes = provider.decrypt_data(bytes)?;
+    return Ok(bytes);
+}
+
 #[no_mangle]
 pub unsafe extern "C" fn Java_com_example_greetings_RustGreetings_decrypt(
     mut env: JNIEnv,
@@ -126,33 +148,7 @@ pub unsafe extern "C" fn Java_com_example_greetings_RustGreetings_decrypt(
     // the bytes are i8 right now, we need to reinterpret them to u8
     let bytes = bytemuck::cast_slice::<i8, u8>(bytes.as_slice());
 
-    let catch_res = catch_unwind(|| {
-        let provider = SecModules::get_instance(
-            "KEY".to_owned(),
-            SecurityModule::Tpm(TpmType::Android(
-                crypto_layer::tpm::core::instance::AndroidTpmType::Keystore,
-            )),
-        )
-        .expect("keystore provider not found");
-
-        let mut provider = provider.lock().unwrap();
-
-        let key_usage = vec![
-            KeyUsage::Decrypt,
-            KeyUsage::SignEncrypt,
-            KeyUsage::CreateX509,
-        ];
-        let algorithm = AsymmetricEncryption::Rsa(algorithms::KeyBits::Bits512);
-        provider
-            .initialize_module(algorithm, None, None, key_usage)
-            .unwrap();
-        provider.load_key("KEY").unwrap();
-
-        let bytes = provider.decrypt_data(bytes).expect("encryption failed");
-        return bytes;
-    });
-
-    match catch_res {
+    match decrypt(bytes) {
         Ok(bytes) => {
             // now we need to turn them back into i8
             let bytes = bytemuck::cast_slice::<u8, i8>(bytes.as_slice());
@@ -170,6 +166,31 @@ pub unsafe extern "C" fn Java_com_example_greetings_RustGreetings_decrypt(
     }
 }
 
+fn sign(bytes: &[u8]) -> Result<Vec<u8>, SecurityModuleError> {
+    let provider = SecModules::get_instance(
+        "KEY SIGN".to_owned(),
+        SecurityModule::Tpm(TpmType::Android(
+            crypto_layer::tpm::core::instance::AndroidTpmType::Keystore,
+        )),
+    )
+    .ok_or(SecurityModuleError::InitializationError("couldn't create key provider".to_owned()))?;
+
+    let mut provider = provider.lock().unwrap();
+
+    let key_usage = vec![
+        KeyUsage::Decrypt,
+        KeyUsage::SignEncrypt,
+        KeyUsage::CreateX509,
+    ];
+    let algorithm = AsymmetricEncryption::Rsa(algorithms::KeyBits::Bits512);
+    provider
+        .initialize_module(algorithm, None, None, key_usage)?;
+    provider.load_key("KEY SIGN")?;
+
+    let bytes = provider.sign_data(bytes)?;
+    return Ok(bytes);
+}
+
 #[no_mangle]
 pub unsafe extern "C" fn Java_com_example_greetings_RustGreetings_sign(
     mut env: JNIEnv,
@@ -184,33 +205,7 @@ pub unsafe extern "C" fn Java_com_example_greetings_RustGreetings_sign(
     // the bytes are i8 right now, we need to reinterpret them to u8
     let bytes = bytemuck::cast_slice::<i8, u8>(bytes.as_slice());
 
-    let catch_res = catch_unwind(|| {
-        let provider = SecModules::get_instance(
-            "KEY SIGN".to_owned(),
-            SecurityModule::Tpm(TpmType::Android(
-                crypto_layer::tpm::core::instance::AndroidTpmType::Keystore,
-            )),
-        )
-        .expect("keystore provider not found");
-
-        let mut provider = provider.lock().unwrap();
-
-        let key_usage = vec![
-            KeyUsage::Decrypt,
-            KeyUsage::SignEncrypt,
-            KeyUsage::CreateX509,
-        ];
-        let algorithm = AsymmetricEncryption::Rsa(algorithms::KeyBits::Bits512);
-        provider
-            .initialize_module(algorithm, None, None, key_usage)
-            .unwrap();
-        provider.load_key("KEY SIGN").unwrap();
-
-        let bytes = provider.sign_data(bytes).expect("signing failed");
-        return bytes;
-    });
-
-    match catch_res {
+    match sign(bytes) {
         Ok(bytes) => {
             // now we need to turn them back into i8
             let bytes = bytemuck::cast_slice::<u8, i8>(bytes.as_slice());
@@ -226,6 +221,30 @@ pub unsafe extern "C" fn Java_com_example_greetings_RustGreetings_sign(
             jni::objects::JObject::null().as_raw()
         }
     }
+}
+
+fn verify(data_bytes: &[u8], signature_bytes: &[u8]) -> Result<bool, SecurityModuleError> {
+    let provider = SecModules::get_instance(
+        "KEY".to_owned(),
+        SecurityModule::Tpm(TpmType::Android(
+            crypto_layer::tpm::core::instance::AndroidTpmType::Keystore,
+        )),
+    )
+    .ok_or(SecurityModuleError::InitializationError("couldn't create key provider".to_owned()))?;
+
+    let mut provider = provider.lock().unwrap();
+
+    let key_usage = vec![
+        KeyUsage::Decrypt,
+        KeyUsage::SignEncrypt,
+        KeyUsage::CreateX509,
+    ];
+    let algorithm = AsymmetricEncryption::Rsa(algorithms::KeyBits::Bits512);
+    provider
+        .initialize_module(algorithm, None, None, key_usage)?;
+    provider.load_key("KEY SIGN")?;
+
+    provider.verify_signature(data_bytes, signature_bytes)
 }
 
 #[no_mangle]
@@ -245,42 +264,13 @@ pub unsafe extern "C" fn Java_com_example_greetings_RustGreetings_verify(
     env.get_byte_array_region(&signature_ref, 0, &mut signature_bytes)
         .unwrap();
 
-    let catch_res = catch_unwind(|| {
-        // the bytes are i8 right now, we need to reinterpret them to u8
-        let data_bytes = bytemuck::cast_slice::<i8, u8>(data_bytes.as_slice());
-        let signature_bytes = bytemuck::cast_slice::<i8, u8>(signature_bytes.as_slice());
+    // the bytes are i8 right now, we need to reinterpret them to u8
+    let data_bytes = bytemuck::cast_slice::<i8, u8>(data_bytes.as_slice());
+    let signature_bytes = bytemuck::cast_slice::<i8, u8>(signature_bytes.as_slice());
 
-        let provider = SecModules::get_instance(
-            "KEY".to_owned(),
-            SecurityModule::Tpm(TpmType::Android(
-                crypto_layer::tpm::core::instance::AndroidTpmType::Keystore,
-            )),
-        )
-        .expect("keystore provider not found");
-
-        let mut provider = provider.lock().unwrap();
-
-        let key_usage = vec![
-            KeyUsage::Decrypt,
-            KeyUsage::SignEncrypt,
-            KeyUsage::CreateX509,
-        ];
-        let algorithm = AsymmetricEncryption::Rsa(algorithms::KeyBits::Bits512);
-        provider
-            .initialize_module(algorithm, None, None, key_usage)
-            .unwrap();
-        provider.load_key("KEY SIGN").unwrap();
-
-        let result = provider.verify_signature(data_bytes, signature_bytes);
-
-        match result {
-            Ok(_) => 1,
-            Err(_) => 0,
-        }
-    });
-
-    match catch_res {
-        Ok(v) => v,
+    match verify(data_bytes, signature_bytes) {
+        Ok(true) => 1,
+        Ok(false) => 0,
         Err(e) => {
             handle_error(&mut env, e);
             0
@@ -288,25 +278,10 @@ pub unsafe extern "C" fn Java_com_example_greetings_RustGreetings_verify(
     }
 }
 
-fn handle_error(env: &mut JNIEnv, error: Box<dyn Any>) {
-    // check if there was a java exception
-    if let Ok(true) = env.exception_check() {
-        error!("There was a java exception, trying to print it:");
-        if let Err(e) = env.exception_describe() {
-            error!("Couldn't print it: {}", e);
-        }
-        // because we didn't clear it, the exception will keep going when we return
-    } else {
-        error!("rust panicked without a java exception");
-        // try and get the error
-        match error.downcast_ref::<String>() {
-            Some(s) => error!(s),
-            None => error!("couldn't downcast rust error"),
-        }
-        // throw java exception
-        if let Err(_) = env.throw_new("java/lang/Exception", "rust panic") {
-            error!("Couldn't throw java exception, panicking");
-            panic!()
-        }
+fn handle_error(env: &mut JNIEnv, error: SecurityModuleError) {
+    // throw java exception
+    if let Err(_) = env.throw_new("java/lang/Exception", error.to_string()) {
+        error!("Couldn't throw java exception, panicking");
+        panic!()
     }
 }

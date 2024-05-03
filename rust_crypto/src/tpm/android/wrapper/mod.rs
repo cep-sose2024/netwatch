@@ -26,11 +26,17 @@ pub(super) fn get_java_vm() -> Result<JavaVM, TpmError> {
     #[cfg(unix)]
     let lib = libloading::os::unix::Library::this();
 
+    // this makes no sense, our code is always compiling as unix
     #[cfg(windows)]
-    let lib = libloading::os::windows::Library::this().unwrap();
+    let lib = libloading::os::windows::Library::this().map_err(|_| {
+        TpmError::InitializationError("could not load process, this should never happen".to_owned())
+    });
 
-    let get_created_java_vms: JniGetCreatedJavaVms =
-        unsafe { *lib.get(JNI_GET_JAVA_VMS_NAME).unwrap() };
+    let get_created_java_vms: JniGetCreatedJavaVms = unsafe {
+        *lib.get(JNI_GET_JAVA_VMS_NAME).map_err(|_| {
+            TpmError::InitializationError("function JNI_GET_JAVA_VMS_NAME not loaded".to_owned())
+        })?
+    };
 
     // now that we have the function, we can call it
     let mut buffer = [std::ptr::null_mut::<jni::sys::JavaVM>(); 1];
