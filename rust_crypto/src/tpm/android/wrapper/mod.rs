@@ -33,8 +33,8 @@ pub(super) fn get_java_vm() -> Result<JavaVM, TpmError> {
     });
 
     let get_created_java_vms: JniGetCreatedJavaVms = unsafe {
-        *lib.get(JNI_GET_JAVA_VMS_NAME).map_err(|_| {
-            TpmError::InitializationError("function JNI_GET_JAVA_VMS_NAME not loaded".to_owned())
+        *lib.get(JNI_GET_JAVA_VMS_NAME).map_err(|e| {
+            TpmError::InitializationError(format!("function JNI_GET_JAVA_VMS_NAME not loaded: {e}"))
         })?
     };
 

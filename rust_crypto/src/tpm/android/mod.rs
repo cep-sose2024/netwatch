@@ -3,6 +3,8 @@ pub mod knox;
 pub(crate) mod wrapper;
 
 use log::{debug, info};
+use std::fmt::format;
+
 use robusta_jni::jni::objects::JObject;
 use robusta_jni::jni::JavaVM;
 use tracing::instrument;
@@ -38,6 +40,7 @@ pub(crate) struct AndroidProvider {
     hash: Option<Hash>,
     key_usages: Option<Vec<KeyUsage>>,
     vm: Option<JavaVM>,
+    key_created: bool,
 }
 
 impl AndroidProvider {
@@ -59,6 +62,7 @@ impl AndroidProvider {
             hash: None,
             key_usages: None,
             vm: None,
+            key_created: false,
         }
     }
 }
@@ -73,10 +77,26 @@ impl Provider for AndroidProvider {
         );
 
         info!("generating key! {}", key_id);
+        info!("generating key!");
+
+        // error if not initialized
+        let key_algo = self
+            .key_algo
+            .as_ref()
+            .ok_or(SecurityModuleError::InitializationError(
+                "Module is not initialized".to_owned(),
+            ))?;
+
+        // check if we need RSA or EC
+        let algorithm = match key_algo {
+            AsymmetricEncryption::Rsa(_) => "RSA",
+            AsymmetricEncryption::Ecc(_) => "EC",
+        };
+
         let env = self
             .vm
             .as_ref()
-            .ok_or_else(|| TpmError::InitializationError("Module is not initialized".to_owned()))?
+            .expect("cannot happen, already checked")
             .get_env()
             .map_err(|_| {
                 TpmError::InitializationError(
@@ -150,7 +170,21 @@ impl Provider for AndroidProvider {
 impl KeyHandle for AndroidProvider {
     #[instrument]
     fn sign_data(&self, data: &[u8]) -> Result<Vec<u8>, SecurityModuleError> {
-        info!("signing data");
+        // check that signing is allowed
+        if !self
+            .key_usages
+            .as_ref()
+            .ok_or(SecurityModuleError::InitializationError(
+                "Module is not initialized".to_owned(),
+            ))?
+            .contains(&KeyUsage::SignEncrypt)
+        {
+            return Err(TpmError::UnsupportedOperation(
+                "KeyUsage::SignEncrypt was not provided".to_owned(),
+            )
+            .into());
+        }
+
         let env = self
             .vm
             .as_ref()
@@ -167,7 +201,7 @@ impl KeyHandle for AndroidProvider {
         debug!("KeyStore.load() OK: {}", key_store_load.is_ok());
 
         let private_key = key_store
-            .getKey(&env, "KEY SIGN".to_owned(), JObject::null())
+            .getKey(&env, self.key_id.clone(), JObject::null())
             .err_internal()?;
 
         let s = Signature::getInstance(&env, "SHA256withECDSA".to_string()).err_internal()?;
@@ -200,9 +234,18 @@ impl KeyHandle for AndroidProvider {
                 )
             })?;
 
+        let algorithm = match self.key_algo.as_ref().unwrap() {
+            AsymmetricEncryption::Rsa(_) => "RSA",
+            AsymmetricEncryption::Ecc(_) => {
+                return Err(TpmError::UnsupportedOperation(
+                    "EC is not allowed for en/decryption on android".to_owned(),
+                )
+                .into());
+            }
+        };
+
         let key_store = KeyStore::getInstance(&env, ANDROID_KEYSTORE.to_owned()).err_internal()?;
-        let key_store_load = key_store.load(&env, None);
-        debug!("KeyStore.load() OK: {}", key_store_load.is_ok());
+        key_store.load(&env, None).err_internal()?;
 
         let key = key_store
             .getKey(&env, self.key_id.to_owned(), JObject::null())
@@ -210,7 +253,7 @@ impl KeyHandle for AndroidProvider {
 
         let cipher = wrapper::key_store::cipher::jni::Cipher::getInstance(
             &env,
-            "RSA/ECB/PKCS1Padding".to_owned(),
+            format!("{algorithm}/ECB/PKCS1Padding"),
         )
         .err_internal()?;
         cipher.init(&env, 2, key.raw.as_obj()).err_internal()?;
@@ -237,11 +280,17 @@ impl KeyHandle for AndroidProvider {
                 )
             })?;
 
-        let key_store = wrapper::key_store::key_store::jni::KeyStore::getInstance(
-            &env,
-            ANDROID_KEYSTORE.to_owned(),
-        )
-        .err_internal()?;
+        let algorithm = match self.key_algo.as_ref().unwrap() {
+            AsymmetricEncryption::Rsa(_) => "RSA",
+            AsymmetricEncryption::Ecc(_) => {
+                return Err(TpmError::UnsupportedOperation(
+                    "EC is not allowed for en/decryption on android".to_owned(),
+                )
+                .into());
+            }
+        };
+
+        let key_store = KeyStore::getInstance(&env, ANDROID_KEYSTORE.to_owned()).err_internal()?;
 
         let key_store_load = key_store.load(&env, None);
         debug!("KeyStore.load() OK: {}", key_store_load.is_ok());
@@ -257,7 +306,7 @@ impl KeyHandle for AndroidProvider {
 
         let cipher = wrapper::key_store::cipher::jni::Cipher::getInstance(
             &env,
-            "RSA/ECB/PKCS1Padding".to_owned(),
+            format!("{algorithm}/ECB/PKCS1Padding"),
         )
         .err_internal()?;
 
@@ -291,7 +340,7 @@ impl KeyHandle for AndroidProvider {
         debug!("Signature: {}", s.toString(&env).unwrap());
 
         let cert = key_store
-            .getCertificate(&env, "KEY SIGN".to_owned())
+            .getCertificate(&env, self.key_id.clone())
             .err_internal()?;
         debug!("Signature: {}", cert.toString(&env).unwrap());
 

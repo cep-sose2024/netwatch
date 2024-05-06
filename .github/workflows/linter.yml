@@ -1,7 +1,10 @@
 on: [push, pull_request]
 
 name: integration
-
+defaults:
+ run:
+  working-directory: rust_crypto
+  
 jobs:
   check:
     name: Check
@@ -22,13 +25,13 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
+        
       - uses: actions/checkout@v2
       - uses: actions-rs/toolchain@v1
         with:
           profile: minimal
           toolchain: stable
           override: true
-          working-directory: ./rust_robusta
       - uses: actions-rs/cargo@v1
         with:
           command: test
@@ -36,7 +39,8 @@ jobs:
       
       
   rustfmt:
-    runs-on: ubuntu-latest    
+    runs-on: ubuntu-latest
+    
     steps:
     - name: Checkout code
       uses: actions/checkout@v2
@@ -47,22 +51,24 @@ jobs:
         profile: minimal
         toolchain: stable
         components: rustfmt
-        working-directory: ./rust_robusta
     - name: Run rustfmt
+      
       run: cargo fmt -- --check
+      
 
 
   clippy:
     name: Clippy
+    
     runs-on: ubuntu-latest
     steps:
+        
       - uses: actions/checkout@v2
       - uses: actions-rs/toolchain@v1
         with:
           profile: minimal
           toolchain: stable
           override: true
-          working-directory: ./rust_robusta
       - run: rustup component add clippy
       - uses: actions-rs/cargo@v1
         with:
