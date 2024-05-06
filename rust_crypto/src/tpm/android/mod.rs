@@ -2,9 +2,10 @@ pub(crate) mod error;
 pub mod knox;
 pub(crate) mod wrapper;
 
+use log::{debug, info};
 use robusta_jni::jni::objects::JObject;
 use robusta_jni::jni::JavaVM;
-use tracing::{debug, info, instrument};
+use tracing::instrument;
 
 use crate::common::crypto::algorithms::hashes::Hash;
 use crate::common::crypto::KeyUsage;
@@ -65,7 +66,13 @@ impl AndroidProvider {
 impl Provider for AndroidProvider {
     #[instrument]
     fn create_key(&mut self, key_id: &str) -> Result<(), SecurityModuleError> {
-        info!("generating key!");
+        android_logger::init_once(
+            android_logger::Config::default()
+                .with_tag("CRYPTO_LAYER_LOG")
+                .with_max_level(log::LevelFilter::Debug),
+        );
+
+        info!("generating key! {}", key_id);
         let env = self
             .vm
             .as_ref()
@@ -87,16 +94,30 @@ impl Provider for AndroidProvider {
                 .build(&env)
                 .err_internal()?;
 
+        debug!("Key Id: {}", key_id);
+        let algorithm = if key_id == "KEY" { "RSA" } else { "EC" };
+        debug!("Key algorithm: {}", algorithm);
+
         let kpg = wrapper::key_generation::key_pair_generator::jni::KeyPairGenerator::getInstance(
             &env,
-            "RSA".to_owned(),
+            algorithm.to_owned(),
             ANDROID_KEYSTORE.to_owned(),
         )
         .err_internal()?;
 
         kpg.initialize(&env, kps.raw.as_obj()).err_internal()?;
 
-        kpg.generateKeyPair(&env).err_internal()?;
+        let key_pair = kpg.generateKeyPair(&env).unwrap();
+        let public = key_pair.getPublic(&env).unwrap();
+        let private = key_pair.getPrivate(&env).unwrap();
+
+        let public_alg = public.getAlgorithm(&env).unwrap();
+        let private_alg = private.getAlgorithm(&env).unwrap();
+        debug!("Public Alg: {}, Private Alg: {}", public_alg, private_alg);
+        let public_format = public.toString(&env).unwrap();
+        let private_format = private.toString(&env).unwrap();
+        debug!("PublicKey: {}", public_format);
+        debug!("PrivateKey: {}", private_format);
 
         debug!("key generated");
 
@@ -142,18 +163,22 @@ impl KeyHandle for AndroidProvider {
             })?;
 
         let key_store = KeyStore::getInstance(&env, ANDROID_KEYSTORE.to_string()).err_internal()?;
+        let key_store_load = key_store.load(&env, None);
+        debug!("KeyStore.load() OK: {}", key_store_load.is_ok());
 
         let private_key = key_store
             .getKey(&env, "KEY SIGN".to_owned(), JObject::null())
             .err_internal()?;
 
         let s = Signature::getInstance(&env, "SHA256withECDSA".to_string()).err_internal()?;
+        debug!("Signature: {}", s.toString(&env).unwrap());
 
         s.initSign(&env, private_key.raw.as_obj()).err_internal()?;
 
         let data_bytes = data.to_vec().into_boxed_slice();
 
         s.update(&env, data_bytes).err_internal()?;
+        debug!("Signature Init: {}", s.toString(&env).unwrap());
 
         let output = s.sign(&env).err_internal()?;
         debug!("Signature: {:?}", output);
@@ -175,14 +200,11 @@ impl KeyHandle for AndroidProvider {
                 )
             })?;
 
-        let keystore = wrapper::key_store::key_store::jni::KeyStore::getInstance(
-            &env,
-            ANDROID_KEYSTORE.to_owned(),
-        )
-        .err_internal()?;
-        keystore.load(&env, None).err_internal()?;
+        let key_store = KeyStore::getInstance(&env, ANDROID_KEYSTORE.to_owned()).err_internal()?;
+        let key_store_load = key_store.load(&env, None);
+        debug!("KeyStore.load() OK: {}", key_store_load.is_ok());
 
-        let key = keystore
+        let key = key_store
             .getKey(&env, self.key_id.to_owned(), JObject::null())
             .err_internal()?;
 
@@ -197,7 +219,7 @@ impl KeyHandle for AndroidProvider {
             .doFinal(&env, encrypted_data.to_vec())
             .err_internal()?;
 
-        debug!("decrypted");
+        debug!("decrypted data: {:?}", decrypted);
         Ok(decrypted)
     }
 
@@ -215,19 +237,23 @@ impl KeyHandle for AndroidProvider {
                 )
             })?;
 
-        let keystore = wrapper::key_store::key_store::jni::KeyStore::getInstance(
+        let key_store = wrapper::key_store::key_store::jni::KeyStore::getInstance(
             &env,
             ANDROID_KEYSTORE.to_owned(),
         )
         .err_internal()?;
 
-        keystore.load(&env, None).err_internal()?;
+        let key_store_load = key_store.load(&env, None);
+        debug!("KeyStore.load() OK: {}", key_store_load.is_ok());
 
-        let key = keystore
+        let key = key_store
             .getCertificate(&env, self.key_id.to_owned())
             .err_internal()?
             .getPublicKey(&env)
             .err_internal()?;
+
+        let public_alg = key.getAlgorithm(&env).unwrap();
+        debug!("Public Alg: {}", public_alg);
 
         let cipher = wrapper::key_store::cipher::jni::Cipher::getInstance(
             &env,
@@ -258,15 +284,19 @@ impl KeyHandle for AndroidProvider {
             })?;
 
         let key_store = KeyStore::getInstance(&env, ANDROID_KEYSTORE.to_string()).err_internal()?;
-        key_store.load(&env, None).err_internal()?;
+        let key_store_load = key_store.load(&env, None);
+        debug!("KeyStore.load() OK: {}", key_store_load.is_ok());
 
         let s = Signature::getInstance(&env, "SHA256withECDSA".to_string()).err_internal()?;
+        debug!("Signature: {}", s.toString(&env).unwrap());
 
         let cert = key_store
             .getCertificate(&env, "KEY SIGN".to_owned())
             .err_internal()?;
+        debug!("Signature: {}", cert.toString(&env).unwrap());
 
         s.initVerify(&env, cert).err_internal()?;
+        debug!("Signature Init: {}", s.toString(&env).unwrap());
 
         let data_bytes = data.to_vec().into_boxed_slice();
         s.update(&env, data_bytes).err_internal()?;

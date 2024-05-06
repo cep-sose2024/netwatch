@@ -98,5 +98,7 @@ pub mod jni {
             env: &'borrow JNIEnv<'env>,
         ) -> JniResult<PublicKey<'env, 'borrow>> {
         }
+
+        pub extern "java" fn toString(&self, _env: &JNIEnv) -> JniResult<String> {}
     }
 }

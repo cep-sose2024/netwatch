@@ -24,7 +24,7 @@ public class CryptoLayerRust {
     public static String signText(String text) throws Exception {
         byte[] encrypted = RustGreetings.sign(text.getBytes());
 
-        Log.i("CryptoLayer", "signature: " + Arrays.toString(encrypted));
+//        Log.i("CryptoLayer", "signature: " + Arrays.toString(encrypted));
 
         return Base64.encodeToString(encrypted, Base64.URL_SAFE);
     }
@@ -35,7 +35,7 @@ public class CryptoLayerRust {
 
         boolean verified = RustGreetings.verify(textBytes, signatureBytes);
 
-        Log.i("CryptoLayer", "verified: " + verified);
+//        Log.i("CryptoLayer", "verified: " + verified);
 
         return verified;
     }
@@ -43,7 +43,7 @@ public class CryptoLayerRust {
     public static String encryptText(String text) throws Exception {
         byte[] encrypted = RustGreetings.encrypt(text.getBytes());
 
-        Log.i("CryptoLayer", "encrypted array: " + Arrays.toString(encrypted));
+//        Log.i("CryptoLayer", "encrypted array: " + Arrays.toString(encrypted));
 
         return Base64.encodeToString(encrypted, Base64.URL_SAFE);
     }
@@ -51,7 +51,7 @@ public class CryptoLayerRust {
     public static String decryptText(String text) throws Exception {
         byte[] encrypted = Base64.decode(text, Base64.URL_SAFE);
         byte[] decrypted = RustGreetings.decrypt(encrypted);
-        Log.i("CryptoLayer", "decrypted array: " + Arrays.toString(encrypted));
+//        Log.i("CryptoLayer", "decrypted array: " + Arrays.toString(encrypted));
 //        Log.i("CryptoLayer", "encrypted array text: " + new String(encrypted, StandardCharsets.UTF_8));
         return new String(decrypted, StandardCharsets.UTF_8);
     }

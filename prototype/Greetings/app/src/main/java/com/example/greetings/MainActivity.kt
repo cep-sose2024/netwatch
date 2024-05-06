@@ -73,7 +73,7 @@ fun EncryptTest() {
     Column {
         Button(onClick = {
             try {
-                CryptoLayerRust.generateNewKey("KEY123")
+                CryptoLayerRust.generateNewKey("KEY")
             } catch (e: Exception) { alert(e) } })
         {
             Text("Generate Encryption Key")

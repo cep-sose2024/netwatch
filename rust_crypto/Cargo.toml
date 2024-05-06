@@ -46,6 +46,8 @@ yubikey = { version = "0.8.0", optional = true }
 robusta_jni = { version = "0.2", optional = true }
 libloading = { version = "0.8.3", optional = true}
 tracing-android = { version = "0.2.0", optional = true }
+android_logger = "^0"
+log = "^0"
 
 [dev-dependencies]
 test-case = "*"

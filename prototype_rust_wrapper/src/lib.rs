@@ -5,7 +5,9 @@ use crypto_layer::{
         crypto::{
             algorithms::{self, encryption::AsymmetricEncryption},
             KeyUsage,
-        }, error::SecurityModuleError, factory::{SecModules, SecurityModule}
+        },
+        error::SecurityModuleError,
+        factory::{SecModules, SecurityModule},
     },
     tpm::core::instance::TpmType,
 };
@@ -16,13 +18,16 @@ use jni::{
 };
 use tracing::error;
 
-fn generate_new_key() -> Result<(), SecurityModuleError> {
+fn generate_new_key(key_id: String) -> Result<(), SecurityModuleError> {
     let provider = SecModules::get_instance(
-        "KEY".to_owned(),
+        key_id.clone(),
         SecurityModule::Tpm(TpmType::Android(
             crypto_layer::tpm::core::instance::AndroidTpmType::Keystore,
         )),
-    ).ok_or(SecurityModuleError::InitializationError("couldn't create key provider".to_owned()))?;
+    )
+    .ok_or(SecurityModuleError::InitializationError(
+        "couldn't create key provider".to_owned(),
+    ))?;
 
     let mut provider = provider.lock().unwrap();
 
@@ -32,9 +37,8 @@ fn generate_new_key() -> Result<(), SecurityModuleError> {
         KeyUsage::CreateX509,
     ];
     let algorithm = AsymmetricEncryption::Rsa(algorithms::KeyBits::Bits512);
-    provider
-        .initialize_module(algorithm, None, None, key_usage)?;
-    provider.create_key("KEY")?;
+    provider.initialize_module(algorithm, None, None, key_usage)?;
+    provider.create_key(&key_id)?;
     Ok(())
 }
 
@@ -46,7 +50,7 @@ pub unsafe extern "C" fn Java_com_example_greetings_RustGreetings_generateNewKey
 ) {
     let key_id: String = env.get_string(&key_id).expect("Couldn't get key ID").into();
 
-    if let Err(e) = generate_new_key() {
+    if let Err(e) = generate_new_key(key_id) {
         handle_error(&mut env, e);
     }
 }
@@ -58,7 +62,9 @@ fn encrypt(bytes: &[u8]) -> Result<Vec<u8>, SecurityModuleError> {
             crypto_layer::tpm::core::instance::AndroidTpmType::Keystore,
         )),
     )
-    .ok_or(SecurityModuleError::InitializationError("couldn't create key provider".to_owned()))?;
+    .ok_or(SecurityModuleError::InitializationError(
+        "couldn't create key provider".to_owned(),
+    ))?;
 
     let mut provider = provider.lock().unwrap();
 
@@ -68,8 +74,7 @@ fn encrypt(bytes: &[u8]) -> Result<Vec<u8>, SecurityModuleError> {
         KeyUsage::CreateX509,
     ];
     let algorithm = AsymmetricEncryption::Rsa(algorithms::KeyBits::Bits512);
-    provider
-        .initialize_module(algorithm, None, None, key_usage)?;
+    provider.initialize_module(algorithm, None, None, key_usage)?;
     provider.load_key("KEY").unwrap();
 
     let bytes = provider.encrypt_data(bytes)?;
@@ -101,7 +106,7 @@ pub unsafe extern "C" fn Java_com_example_greetings_RustGreetings_encrypt(
                 .expect("Couldn't create java array");
             env.set_byte_array_region(&output, 0, bytes).unwrap();
             **output
-        },
+        }
         Err(e) => {
             handle_error(&mut env, e);
             jni::objects::JObject::null().as_raw()
@@ -116,7 +121,9 @@ fn decrypt(bytes: &[u8]) -> Result<Vec<u8>, SecurityModuleError> {
             crypto_layer::tpm::core::instance::AndroidTpmType::Keystore,
         )),
     )
-    .ok_or(SecurityModuleError::InitializationError("couldn't create key provider".to_owned()))?;
+    .ok_or(SecurityModuleError::InitializationError(
+        "couldn't create key provider".to_owned(),
+    ))?;
 
     let mut provider = provider.lock().unwrap();
 
@@ -126,8 +133,7 @@ fn decrypt(bytes: &[u8]) -> Result<Vec<u8>, SecurityModuleError> {
         KeyUsage::CreateX509,
     ];
     let algorithm = AsymmetricEncryption::Rsa(algorithms::KeyBits::Bits512);
-    provider
-        .initialize_module(algorithm, None, None, key_usage)?;
+    provider.initialize_module(algorithm, None, None, key_usage)?;
     provider.load_key("KEY")?;
 
     let bytes = provider.decrypt_data(bytes)?;
@@ -173,7 +179,9 @@ fn sign(bytes: &[u8]) -> Result<Vec<u8>, SecurityModuleError> {
             crypto_layer::tpm::core::instance::AndroidTpmType::Keystore,
         )),
     )
-    .ok_or(SecurityModuleError::InitializationError("couldn't create key provider".to_owned()))?;
+    .ok_or(SecurityModuleError::InitializationError(
+        "couldn't create key provider".to_owned(),
+    ))?;
 
     let mut provider = provider.lock().unwrap();
 
@@ -183,8 +191,7 @@ fn sign(bytes: &[u8]) -> Result<Vec<u8>, SecurityModuleError> {
         KeyUsage::CreateX509,
     ];
     let algorithm = AsymmetricEncryption::Rsa(algorithms::KeyBits::Bits512);
-    provider
-        .initialize_module(algorithm, None, None, key_usage)?;
+    provider.initialize_module(algorithm, None, None, key_usage)?;
     provider.load_key("KEY SIGN")?;
 
     let bytes = provider.sign_data(bytes)?;
@@ -230,7 +237,9 @@ fn verify(data_bytes: &[u8], signature_bytes: &[u8]) -> Result<bool, SecurityMod
             crypto_layer::tpm::core::instance::AndroidTpmType::Keystore,
         )),
     )
-    .ok_or(SecurityModuleError::InitializationError("couldn't create key provider".to_owned()))?;
+    .ok_or(SecurityModuleError::InitializationError(
+        "couldn't create key provider".to_owned(),
+    ))?;
 
     let mut provider = provider.lock().unwrap();
 
@@ -240,8 +249,7 @@ fn verify(data_bytes: &[u8], signature_bytes: &[u8]) -> Result<bool, SecurityMod
         KeyUsage::CreateX509,
     ];
     let algorithm = AsymmetricEncryption::Rsa(algorithms::KeyBits::Bits512);
-    provider
-        .initialize_module(algorithm, None, None, key_usage)?;
+    provider.initialize_module(algorithm, None, None, key_usage)?;
     provider.load_key("KEY SIGN")?;
 
     provider.verify_signature(data_bytes, signature_bytes)
