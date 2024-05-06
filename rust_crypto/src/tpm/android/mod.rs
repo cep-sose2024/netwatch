@@ -2,8 +2,6 @@ pub(crate) mod error;
 pub mod knox;
 pub(crate) mod wrapper;
 
-use std::fmt::format;
-
 use robusta_jni::jni::objects::JObject;
 use robusta_jni::jni::JavaVM;
 use tracing::{debug, info, instrument};
@@ -39,7 +37,6 @@ pub(crate) struct AndroidProvider {
     hash: Option<Hash>,
     key_usages: Option<Vec<KeyUsage>>,
     vm: Option<JavaVM>,
-    key_created: bool,
 }
 
 impl AndroidProvider {
@@ -61,7 +58,6 @@ impl AndroidProvider {
             hash: None,
             key_usages: None,
             vm: None,
-            key_created: false,
         }
     }
 }
@@ -122,9 +118,9 @@ impl Provider for AndroidProvider {
         Ok(())
     }
 
-    /// As a Provider can only hold one Key, there is no need to load a key
     #[instrument]
     fn load_key(&mut self, key_id: &str) -> Result<(), SecurityModuleError> {
+        self.key_id = key_id.to_owned();
         Ok(())
     }
 
@@ -175,6 +171,8 @@ impl KeyHandle for AndroidProvider {
             })?;
 
         let key_store = KeyStore::getInstance(&env, ANDROID_KEYSTORE.to_string()).err_internal()?;
+
+        key_store.load(&env, None).err_internal()?;
 
         let private_key = key_store
             .getKey(&env, self.key_id.clone(), JObject::null())
