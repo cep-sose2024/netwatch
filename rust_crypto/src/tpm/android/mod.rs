@@ -3,7 +3,6 @@ pub mod knox;
 pub(crate) mod wrapper;
 
 use log::{debug, info};
-use std::fmt::format;
 
 use robusta_jni::jni::objects::JObject;
 use robusta_jni::jni::JavaVM;
@@ -147,6 +146,7 @@ impl Provider for AndroidProvider {
     /// As a Provider can only hold one Key, there is no need to load a key
     #[instrument]
     fn load_key(&mut self, key_id: &str) -> Result<(), SecurityModuleError> {
+        self.key_id = key_id.to_owned();
         Ok(())
     }
 
@@ -199,6 +199,8 @@ impl KeyHandle for AndroidProvider {
         let key_store = KeyStore::getInstance(&env, ANDROID_KEYSTORE.to_string()).err_internal()?;
         let key_store_load = key_store.load(&env, None);
         debug!("KeyStore.load() OK: {}", key_store_load.is_ok());
+
+        debug!("self.key_id.clone(): {}", self.key_id.clone());
 
         let private_key = key_store
             .getKey(&env, self.key_id.clone(), JObject::null())
