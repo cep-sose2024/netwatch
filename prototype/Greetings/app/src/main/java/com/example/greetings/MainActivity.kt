@@ -9,7 +9,6 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.layout.wrapContentWidth
-import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.BasicAlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -64,6 +63,8 @@ fun EncryptTest() {
     var verificationStatus by remember { mutableStateOf("") }
     var showAlert by remember { mutableStateOf(false) }
     var exceptionName by remember { mutableStateOf("") }
+    var signature by remember { mutableStateOf(byteArrayOf()) } // Add this line
+
 
     val alert = { e: Exception ->
         showAlert = true
@@ -74,7 +75,10 @@ fun EncryptTest() {
         Button(onClick = {
             try {
                 CryptoLayerRust.generateNewKey("KEY")
-            } catch (e: Exception) { alert(e) } })
+            } catch (e: Exception) {
+                alert(e)
+            }
+        })
         {
             Text("Generate Encryption Key")
         }
@@ -86,7 +90,9 @@ fun EncryptTest() {
         Button(onClick = {
             try {
                 encText = CryptoLayerRust.encryptText(text)
-            } catch (e: Exception) { alert(e) }
+            } catch (e: Exception) {
+                alert(e)
+            }
         }) {
             Text("Encrypt")
         }
@@ -99,7 +105,9 @@ fun EncryptTest() {
             try {
                 val dec = CryptoLayerRust.decryptText(encText)
                 encText = dec
-            } catch (e: Exception) { alert(e) }
+            } catch (e: Exception) {
+                alert(e)
+            }
         }) {
             Text("Decrypt")
         }
@@ -111,26 +119,31 @@ fun EncryptTest() {
         )
         Button(onClick = {
             try {
-                val signature = CryptoLayerRust.signText(encText)
-                signatureText = signature
-            } catch (e: Exception) { alert(e) }
+                signature = CryptoLayerRust.signText(encText)
+                signatureText = signature.toString()
+            } catch (e: Exception) {
+                alert(e)
+            }
         }) {
             Text("Sign")
         }
         Button(onClick = {
             try {
-                val verified = CryptoLayerRust.verifyText(encText, signatureText)
+                val verified = CryptoLayerRust.verifyText(encText, signature)
                 verificationStatus = if (verified) "Verified" else "Not Verified"
-            } catch (e: Exception) { alert(e) }
+            } catch (e: Exception) {
+                alert(e)
+            }
         }) {
             Text("Verify Signature")
         }
         Text(text = verificationStatus)
-        Button(onClick = { try {
-            CryptoLayerRust.generateNewKey("KEY SIGN")
-        } catch (e: Exception) {
-            alert(e)
-        }
+        Button(onClick = {
+            try {
+                CryptoLayerRust.generateNewKey("KEY SIGN")
+            } catch (e: Exception) {
+                alert(e)
+            }
         }) {
             Text("Generate Signing Key")
         }
