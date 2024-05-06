@@ -17,12 +17,20 @@ import javax.crypto.Cipher;
 
 public class CryptoLayerRust {
 
-    public static void generateNewKey(String keyId) {
-        RustGreetings.generateNewKey(keyId);
+    static final String ec_key = "KEY_EC";
+    static final String rsa_key = "KEY_RSA";
+
+    public static void generateRSAKey() {
+        RustGreetings.generateNewKey(rsa_key, "RSA");
+    }
+
+    public static void generateECKey() {
+        Log.d("CryptoLayerRust", "generating ec key");
+        RustGreetings.generateNewKey(ec_key, "EC");
     }
 
     public static String signText(String text) throws Exception {
-        byte[] encrypted = RustGreetings.sign(text.getBytes());
+        byte[] encrypted = RustGreetings.sign(ec_key, text.getBytes());
 
         Log.i("CryptoLayer", "signature: " + Arrays.toString(encrypted));
 
@@ -30,10 +38,9 @@ public class CryptoLayerRust {
     }
 
     public static boolean verifyText(String text, String signature) throws Exception {
-        byte[] textBytes = Base64.decode(text, Base64.URL_SAFE);
         byte[] signatureBytes = Base64.decode(signature, Base64.URL_SAFE);
 
-        boolean verified = RustGreetings.verify(textBytes, signatureBytes);
+        boolean verified = RustGreetings.verify(ec_key, text.getBytes(), signatureBytes);
 
         Log.i("CryptoLayer", "verified: " + verified);
 
@@ -41,7 +48,7 @@ public class CryptoLayerRust {
     }
 
     public static String encryptText(String text) throws Exception {
-        byte[] encrypted = RustGreetings.encrypt(text.getBytes());
+        byte[] encrypted = RustGreetings.encrypt(rsa_key, text.getBytes());
 
         Log.i("CryptoLayer", "encrypted array: " + Arrays.toString(encrypted));
 
@@ -50,7 +57,7 @@ public class CryptoLayerRust {
 
     public static String decryptText(String text) throws Exception {
         byte[] encrypted = Base64.decode(text, Base64.URL_SAFE);
-        byte[] decrypted = RustGreetings.decrypt(encrypted);
+        byte[] decrypted = RustGreetings.decrypt(rsa_key, encrypted);
         Log.i("CryptoLayer", "decrypted array: " + Arrays.toString(encrypted));
 //        Log.i("CryptoLayer", "encrypted array text: " + new String(encrypted, StandardCharsets.UTF_8));
         return new String(decrypted, StandardCharsets.UTF_8);
