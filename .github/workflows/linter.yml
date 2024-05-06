@@ -1,7 +1,10 @@
 on: [push, pull_request]
 
 name: integration
-
+defaults:
+ run:
+  working-directory: ./rust_crypto
+  
 jobs:
   check:
     name: Check
@@ -28,7 +31,7 @@ jobs:
           profile: minimal
           toolchain: stable
           override: true
-          working-directory: ./rust_robusta
+          working-directory: ./rust_crypto
       - uses: actions-rs/cargo@v1
         with:
           command: test
@@ -47,7 +50,7 @@ jobs:
         profile: minimal
         toolchain: stable
         components: rustfmt
-        working-directory: ./rust_robusta
+        working-directory: ./rust_crypto
     - name: Run rustfmt
       run: cargo fmt -- --check
 
@@ -62,7 +65,7 @@ jobs:
           profile: minimal
           toolchain: stable
           override: true
-          working-directory: ./rust_robusta
+          working-directory: ./rust_crypto
       - run: rustup component add clippy
       - uses: actions-rs/cargo@v1
         with:
