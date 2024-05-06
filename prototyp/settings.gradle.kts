@@ -19,6 +19,6 @@ dependencyResolutionManagement {
     }
 }
 
-rootProject.name = "Greetings"
+rootProject.name = "NetWatch"
 include(":app")
  
