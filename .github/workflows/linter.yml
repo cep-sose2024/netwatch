@@ -3,7 +3,7 @@ on: [push, pull_request]
 name: integration
 defaults:
  run:
-  working-directory: ./rust_crypto/
+  working-directory: ./rust_crypto
   
 jobs:
   check:
