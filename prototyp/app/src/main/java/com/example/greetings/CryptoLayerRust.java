@@ -1,8 +1,10 @@
 package com.example.greetings;
 
 import android.util.Base64;
+import android.util.Log;
 
 import java.nio.charset.StandardCharsets;
+import java.util.Arrays;
 
 public class CryptoLayerRust {
 

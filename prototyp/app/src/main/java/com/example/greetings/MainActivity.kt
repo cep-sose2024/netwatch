@@ -63,8 +63,6 @@ fun EncryptTest() {
     var verificationStatus by remember { mutableStateOf("") }
     var showAlert by remember { mutableStateOf(false) }
     var exceptionName by remember { mutableStateOf("") }
-    var signature by remember { mutableStateOf(byteArrayOf()) } // Add this line
-
 
     val alert = { e: Exception ->
         showAlert = true
@@ -116,8 +114,7 @@ fun EncryptTest() {
         )
         Button(onClick = {
             try {
-                signature = CryptoLayerRust.signText(encText)
-                signatureText = signature.toString()
+                signatureText = CryptoLayerRust.signText(encText)
             } catch (e: Exception) {
                 alert(e)
             }
@@ -126,7 +123,7 @@ fun EncryptTest() {
         }
         Button(onClick = {
             try {
-                val verified = CryptoLayerRust.verifyText(encText, signature)
+                val verified = CryptoLayerRust.verifyText(encText, signatureText)
                 verificationStatus = if (verified) "Verified" else "Not Verified"
             } catch (e: Exception) {
                 alert(e)
