@@ -16,5 +16,7 @@ pub mod jni {
 
     impl<'env: 'borrow, 'borrow> KeyGenParameterSpec<'env, 'borrow> {
         pub extern "java" fn getDigests(&self, env: &JNIEnv) -> JniResult<Vec<String>> {}
+
+        pub extern "java" fn isStrongBoxBacked(&self, env: &JNIEnv) -> JniResult<bool> {}
     }
 }

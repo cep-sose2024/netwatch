@@ -17,7 +17,7 @@ public class CryptoLayerRust {
 
     public static void generateECKey() {
         Log.d("CryptoLayerRust", "generating ec key");
-        RustGreetings.generateNewKey(ec_key, "EC");
+        RustGreetings.generateNewKey(ec_key, "RSA");
     }
 
     public static String signText(String text) throws Exception {

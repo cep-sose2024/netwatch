@@ -70,6 +70,44 @@ impl<'env: 'borrow, 'borrow> Builder<'env, 'borrow> {
         Ok(self)
     }
 
+    pub fn set_signature_paddings(
+        mut self,
+        env: &'borrow JNIEnv<'env>,
+        paddings: Vec<String>,
+    ) -> JniResult<Self> {
+        let string_class = env.find_class("java/lang/String")?;
+        let padding_array =
+            env.new_object_array(paddings.len() as jsize, string_class, JObject::null())?;
+        for (i, padding) in paddings.iter().enumerate() {
+            let jstring_padding = env.new_string(padding)?;
+            env.set_object_array_element(padding_array, i as jsize, jstring_padding)?;
+        }
+
+        let result = env.call_method(
+            self.raw.as_obj(),
+            "setSignaturePaddings",
+            "([Ljava/lang/String;)Landroid/security/keystore/KeyGenParameterSpec$Builder;",
+            &[padding_array.into()],
+        )?;
+        self.raw = AutoLocal::new(env, result.l()?);
+        Ok(self)
+    }
+
+    pub fn set_is_strongbox_backed(
+        mut self,
+        env: &'borrow JNIEnv<'env>,
+        is_strongbox_backed: bool,
+    ) -> JniResult<Self> {
+        let result = env.call_method(
+            self.raw.as_obj(),
+            "setIsStrongBoxBacked",
+            "(Z)Landroid/security/keystore/KeyGenParameterSpec$Builder;",
+            &[JValue::Bool(is_strongbox_backed.into())],
+        )?;
+        self.raw = AutoLocal::new(env, result.l()?);
+        Ok(self)
+    }
+
     pub fn build(
         self,
         env: &'borrow JNIEnv<'env>,

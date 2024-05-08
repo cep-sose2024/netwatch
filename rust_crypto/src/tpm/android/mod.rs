@@ -92,25 +92,52 @@ impl Provider for AndroidProvider {
                 )
             })?;
 
-        let kps =
-            wrapper::key_generation::builder::Builder::new(&env, key_id.to_owned(), 1 | 2 | 4 | 8)
-                .err_internal()?
-                .set_digests(&env, vec!["SHA-256".to_owned(), "SHA-512".to_owned()])
-                .err_internal()?
-                .set_encryption_paddings(&env, vec!["PKCS1Padding".to_owned()])
-                .err_internal()?
-                .build(&env)
-                .err_internal()?;
+        let mut kpg;
+        let mut strongbox_backed = true;
 
-        let kpg = wrapper::key_generation::key_pair_generator::jni::KeyPairGenerator::getInstance(
-            &env,
-            algorithm.to_owned(),
-            ANDROID_KEYSTORE.to_owned(),
-        )
-        .err_internal()?;
+        for _ in 0..2 {
+            let kps = wrapper::key_generation::builder::Builder::new(
+                &env,
+                key_id.to_owned(),
+                1 | 2 | 4 | 8,
+            )
+            .err_internal()?
+            .set_digests(&env, vec!["SHA-256".to_owned(), "SHA-512".to_owned()])
+            .err_internal()?
+            .set_encryption_paddings(&env, vec!["PKCS1Padding".to_owned()])
+            .err_internal()?
+            .set_signature_paddings(&env, vec!["PKCS1".to_owned()])
+            .err_internal()?
+            .set_is_strongbox_backed(&env, strongbox_backed)
+            .err_internal()?
+            .build(&env)
+            .err_internal()?;
 
-        kpg.initialize(&env, kps.raw.as_obj()).err_internal()?;
-        kpg.generateKeyPair(&env).err_internal()?;
+            kpg = wrapper::key_generation::key_pair_generator::jni::KeyPairGenerator::getInstance(
+                &env,
+                algorithm.to_owned(),
+                ANDROID_KEYSTORE.to_owned(),
+            )
+            .err_internal()?;
+
+            if let Err(_) = kpg.initialize(&env, kps.raw.as_obj()).err_internal() {
+                continue;
+            }
+
+            match kpg.generateKeyPair(&env).err_internal() {
+                Ok(_) => {
+                    break;
+                }
+                Err(e) => {
+                    if !strongbox_backed {
+                        return Err(SecurityModuleError::Tpm(TpmError::InternalError(Box::new(
+                            e,
+                        ))));
+                    }
+                }
+            }
+            strongbox_backed = false;
+        }
 
         debug!("key generated");
 
@@ -176,7 +203,14 @@ impl KeyHandle for AndroidProvider {
             .getKey(&env, self.key_id.clone(), JObject::null())
             .err_internal()?;
 
-        let s = Signature::getInstance(&env, "SHA256withECDSA".to_string()).err_internal()?;
+        let signature_algorithm = match self.key_algo {
+            Some(AsymmetricEncryption::Rsa(_)) => "SHA256withRSA",
+            Some(AsymmetricEncryption::Ecc(_)) => "SHA256withECDSA",
+            _ => panic!("Invalid key_algo"),
+        };
+        debug!("Signature Algorithm: {}", signature_algorithm);
+
+        let s = Signature::getInstance(&env, signature_algorithm.to_string()).err_internal()?;
 
         s.initSign(&env, private_key.raw.as_obj()).err_internal()?;
 
@@ -303,7 +337,14 @@ impl KeyHandle for AndroidProvider {
         let key_store = KeyStore::getInstance(&env, ANDROID_KEYSTORE.to_string()).err_internal()?;
         key_store.load(&env, None).err_internal()?;
 
-        let s = Signature::getInstance(&env, "SHA256withECDSA".to_string()).err_internal()?;
+        let signature_algorithm = match self.key_algo {
+            Some(AsymmetricEncryption::Rsa(_)) => "SHA256withRSA",
+            Some(AsymmetricEncryption::Ecc(_)) => "SHA256withECDSA",
+            _ => panic!("Invalid key_algo"),
+        };
+        debug!("Signature Algorithm: {}", signature_algorithm);
+
+        let s = Signature::getInstance(&env, signature_algorithm.to_string()).err_internal()?;
 
         let cert = key_store
             .getCertificate(&env, self.key_id.clone())
