@@ -7,11 +7,11 @@ tags: [started]
 
 ## What is NetWatch?
 
-**NetWatch** is part of the Cooperative Education Program (CEP) at the Mannheim University of Applied Science. The main goal is to develop an interface wrapper that ensures secure interaction with the Android Keystore system. The wrapper is specifically optimized for use on Google Pixel devices and integrates Hardware Security Modules (HSM) to maximize data security. This is achieved through improved and trustworthy storage and transmission of sensitive data, specifically tailored to the security architecture of mobile devices.
+**NetWatch** is part of the Cyber Security Development Project (CEP) at the Mannheim University of Applied Science. The main goal is to develop an interface wrapper that ensures secure interaction with the Android Keystore system. The wrapper is specifically optimized for use on Google Pixel devices and integrates Hardware Security Modules (HSM) to maximize data security. This is achieved through improved and trustworthy storage and transmission of sensitive data, specifically tailored to the security architecture of mobile devices.
 
 ## Who is behind NetWatch?
 
-NetWatch is a team of students from the [Mannheim University of Applied Sciences](https://www.english.hs-mannheim.de/the-university.html) in collaboration with [j&s-soft GmbH]([Start - j&s-soft (js-soft.com)](https://www.js-soft.com/)) based in Heidelberg, Germany. This project is part of the  [**Enmeshed**]([Start - enmeshed](https://enmeshed.de/en/) platform, which aims to provide open-source solutions for secure and efficient digital communication and collaboration.
+NetWatch is a team of students from the [Mannheim University of Applied Sciences](https://www.english.hs-mannheim.de/the-university.html) in collaboration with [j&s-soft GmbH]([Start - j&s-soft (js-soft.com)](https://www.js-soft.com/)) based in Heidelberg, Germany. This project is part of the  [**Enmeshed**](https://enmeshed.de/en/) platform, which aims to provide open-source solutions for secure and efficient digital communication and collaboration.
 
 ## Prototype
 
