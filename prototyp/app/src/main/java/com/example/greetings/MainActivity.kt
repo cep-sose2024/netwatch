@@ -74,11 +74,8 @@ fun EncryptTest() {
     Column {
         Button(onClick = {
             try {
-                CryptoLayerRust.generateNewKey("KEY")
-            } catch (e: Exception) {
-                alert(e)
-            }
-        })
+                CryptoLayerRust.generateRSAKey()
+            } catch (e: Exception) { alert(e) } })
         {
             Text("Generate Encryption Key")
         }
@@ -138,12 +135,11 @@ fun EncryptTest() {
             Text("Verify Signature")
         }
         Text(text = verificationStatus)
-        Button(onClick = {
-            try {
-                CryptoLayerRust.generateNewKey("KEY SIGN")
-            } catch (e: Exception) {
-                alert(e)
-            }
+        Button(onClick = { try {
+            CryptoLayerRust.generateECKey()
+        } catch (e: Exception) {
+            alert(e)
+        }
         }) {
             Text("Generate Signing Key")
         }

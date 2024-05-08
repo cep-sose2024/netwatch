@@ -3,7 +3,7 @@ on: [push, pull_request]
 name: integration
 defaults:
  run:
-  working-directory: rust_crypto
+  working-directory: ./rust_crypto
   
 jobs:
   check:
@@ -24,8 +24,7 @@ jobs:
     name: Test Suite
     runs-on: ubuntu-latest
 
-    steps:
-        
+    steps:       
       - uses: actions/checkout@v2
       - uses: actions-rs/toolchain@v1
         with:
@@ -52,7 +51,6 @@ jobs:
         toolchain: stable
         components: rustfmt
     - name: Run rustfmt
-      
       run: cargo fmt -- --check
       
 
@@ -72,4 +70,3 @@ jobs:
         with:
           command: clippy
           args: -- -D warnings
-        working-directory: ./rust_crypto

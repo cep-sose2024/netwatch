@@ -8,7 +8,7 @@ android {
     compileSdk = 34
 
     defaultConfig {
-        applicationId = "com.example.greetings"
+        applicationId = "com.NetWatch"
         minSdk = 28
         targetSdk = 34
         versionCode = 1

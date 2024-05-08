@@ -25,6 +25,8 @@ pub(super) fn get_java_vm() -> Result<JavaVM, TpmError> {
 
     #[cfg(unix)]
     let lib = libloading::os::unix::Library::this();
+    // let lib = unsafe { libloading::os::unix::Library::new("libart.so") }
+    // .map_err(|e| TpmError::InitializationError(format!("could not find libart.so: {e}")))?;
 
     // this makes no sense, our code is always compiling as unix
     #[cfg(windows)]
