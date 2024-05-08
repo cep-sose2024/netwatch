@@ -1,9 +1,14 @@
 ---
+layout: home
 title: "Getting Started"
-date: 2024-05-06 00:00:00 +0800
-categories: [Start here]
-tags: [started]
+date: 2024-04-00 00:00:00 +0800
+categories: [Getting Stared]
+pin: true
 ---
+
+> Check out the **Enmeshed Documentation** [here.](https://enmeshed.eu/) <img src="https://avatars.githubusercontent.com/u/87031446?s=200&v=4" alt="Beschreibung des Bildes" width="20" height="20">
+{: .prompt-info }
+
 
 ## What is NetWatch?
 

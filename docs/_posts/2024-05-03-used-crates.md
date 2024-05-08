@@ -1,8 +1,8 @@
 ---
 title: "Used Rust Crates"
-date: 2024-05-03 00:00:00 +0800
-categories: [Architecture]
-tags: [crypto layer, hsm]
+date: 2024-04-28 00:00:00 +0800
+categories: [Rust]
+tags: [rust, crate]
 ---
 
 # Used Rust Crates
