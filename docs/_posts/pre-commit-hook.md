@@ -1,3 +1,10 @@
+---
+title: "Pre-Commit Hook"
+date: 2024-05-08 00:00:00 +0800
+categories: [Rust]
+tags: [rust]
+---
+
 # Pre-Commit Hooks
 
 You may have come across the saying during  your younger days or throughout your life: "Quality over Quantity."
