@@ -99,6 +99,8 @@ impl Provider for AndroidProvider {
                 .err_internal()?
                 .set_encryption_paddings(&env, vec!["PKCS1Padding".to_owned()])
                 .err_internal()?
+                .set_signature_paddings(&env, vec!["PKCS1".to_owned()])
+                .err_internal()?
                 .build(&env)
                 .err_internal()?;
 
@@ -176,7 +178,14 @@ impl KeyHandle for AndroidProvider {
             .getKey(&env, self.key_id.clone(), JObject::null())
             .err_internal()?;
 
-        let s = Signature::getInstance(&env, "SHA256withECDSA".to_string()).err_internal()?;
+        let signature_algorithm = match self.key_algo {
+            Some(AsymmetricEncryption::Rsa(_)) => "SHA256withRSA",
+            Some(AsymmetricEncryption::Ecc(_)) => "SHA256withECDSA",
+            _ => panic!("Invalid key_algo"),
+        };
+        debug!("Signature Algorithm: {}", signature_algorithm);
+
+        let s = Signature::getInstance(&env, signature_algorithm.to_string()).err_internal()?;
 
         s.initSign(&env, private_key.raw.as_obj()).err_internal()?;
 
@@ -303,7 +312,14 @@ impl KeyHandle for AndroidProvider {
         let key_store = KeyStore::getInstance(&env, ANDROID_KEYSTORE.to_string()).err_internal()?;
         key_store.load(&env, None).err_internal()?;
 
-        let s = Signature::getInstance(&env, "SHA256withECDSA".to_string()).err_internal()?;
+        let signature_algorithm = match self.key_algo {
+            Some(AsymmetricEncryption::Rsa(_)) => "SHA256withRSA",
+            Some(AsymmetricEncryption::Ecc(_)) => "SHA256withECDSA",
+            _ => panic!("Invalid key_algo"),
+        };
+        debug!("Signature Algorithm: {}", signature_algorithm);
+
+        let s = Signature::getInstance(&env, signature_algorithm.to_string()).err_internal()?;
 
         let cert = key_store
             .getCertificate(&env, self.key_id.clone())

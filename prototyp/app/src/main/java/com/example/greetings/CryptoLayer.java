@@ -54,13 +54,14 @@ public class CryptoLayer {
     }
 
     public static void generateNewKeyForSigning(String keyName) throws Exception {
-        KeyPairGenerator gen = KeyPairGenerator.getInstance(KeyProperties.KEY_ALGORITHM_EC, ANDROID_KEYSTORE);
+        KeyPairGenerator gen = KeyPairGenerator.getInstance(KeyProperties.KEY_ALGORITHM_RSA, ANDROID_KEYSTORE);
 
         KeyGenParameterSpec spec = new KeyGenParameterSpec.Builder(
                 keyName,
                 KeyProperties.PURPOSE_SIGN | KeyProperties.PURPOSE_VERIFY)
                 .setDigests(KeyProperties.DIGEST_SHA256, KeyProperties.DIGEST_SHA512)
                 .setEncryptionPaddings(KeyProperties.ENCRYPTION_PADDING_RSA_PKCS1)
+                .setSignaturePaddings(KeyProperties.SIGNATURE_PADDING_RSA_PKCS1)
                 .build();
 
         gen.initialize(spec);
@@ -108,7 +109,7 @@ public class CryptoLayer {
         KeyStore ks = KeyStore.getInstance(ANDROID_KEYSTORE);
         ks.load(null);
 
-        Signature s = Signature.getInstance("SHA256withECDSA");
+        Signature s = Signature.getInstance("SHA256withRSA");
         s.initSign((PrivateKey) ks.getKey(keyName, null));
         s.update(data.getBytes());
         return s.sign();
@@ -124,7 +125,7 @@ public class CryptoLayer {
         KeyStore ks = KeyStore.getInstance(ANDROID_KEYSTORE);
         ks.load(null);
 
-        Signature s = Signature.getInstance("SHA256withECDSA");
+        Signature s = Signature.getInstance("SHA256withRSA");
         s.initVerify(ks.getCertificate(keyName));
         s.update(data.getBytes());
         return s.verify(signature);
