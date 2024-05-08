@@ -108,6 +108,8 @@ impl Provider for AndroidProvider {
             .err_internal()?
             .set_signature_paddings(&env, vec!["PKCS1".to_owned()])
             .err_internal()?
+            .set_is_strongbox_backed(&env, strongbox_backed)
+            .err_internal()?
             .build(&env)
             .err_internal()?;
 
@@ -117,9 +119,6 @@ impl Provider for AndroidProvider {
                 ANDROID_KEYSTORE.to_owned(),
             )
             .err_internal()?;
-
-            let is_strongbox_backed = kps.isStrongBoxBacked(&env).err_internal()?;
-            debug!("is strongbox backed: {}", is_strongbox_backed);
 
             if let Err(_) = kpg.initialize(&env, kps.raw.as_obj()).err_internal() {
                 continue;
@@ -137,6 +136,7 @@ impl Provider for AndroidProvider {
                     }
                 }
             }
+
             strongbox_backed = false;
         }
 
