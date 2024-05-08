@@ -1,5 +1,4 @@
 ---
-layout: home
 title: "Getting Started"
 date: 2024-04-00 00:00:00 +0800
 categories: [Getting Stared]
