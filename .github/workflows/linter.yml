@@ -72,4 +72,3 @@ jobs:
         with:
           command: clippy
           args: -- -D warnings
-        working-directory: ./rust_crypto
