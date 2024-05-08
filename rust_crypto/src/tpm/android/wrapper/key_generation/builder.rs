@@ -93,6 +93,21 @@ impl<'env: 'borrow, 'borrow> Builder<'env, 'borrow> {
         Ok(self)
     }
 
+    pub fn set_is_strongbox_backed(
+        mut self,
+        env: &'borrow JNIEnv<'env>,
+        is_strongbox_backed: bool,
+    ) -> JniResult<Self> {
+        let result = env.call_method(
+            self.raw.as_obj(),
+            "setIsStrongBoxBacked",
+            "(Z)Landroid/security/keystore/KeyGenParameterSpec$Builder;",
+            &[JValue::Bool(is_strongbox_backed.into())],
+        )?;
+        self.raw = AutoLocal::new(env, result.l()?);
+        Ok(self)
+    }
+
     pub fn build(
         self,
         env: &'borrow JNIEnv<'env>,

@@ -3,6 +3,7 @@ package com.example.greetings;
 import android.graphics.Point;
 import android.security.keystore.KeyGenParameterSpec;
 import android.security.keystore.KeyProperties;
+import android.security.keystore.KeyInfo;
 import android.util.Base64;
 import android.util.Log;
 

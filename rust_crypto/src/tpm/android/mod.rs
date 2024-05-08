@@ -92,27 +92,52 @@ impl Provider for AndroidProvider {
                 )
             })?;
 
-        let kps =
-            wrapper::key_generation::builder::Builder::new(&env, key_id.to_owned(), 1 | 2 | 4 | 8)
-                .err_internal()?
-                .set_digests(&env, vec!["SHA-256".to_owned(), "SHA-512".to_owned()])
-                .err_internal()?
-                .set_encryption_paddings(&env, vec!["PKCS1Padding".to_owned()])
-                .err_internal()?
-                .set_signature_paddings(&env, vec!["PKCS1".to_owned()])
-                .err_internal()?
-                .build(&env)
-                .err_internal()?;
+        let mut kpg;
+        let mut strongbox_backed = true;
 
-        let kpg = wrapper::key_generation::key_pair_generator::jni::KeyPairGenerator::getInstance(
-            &env,
-            algorithm.to_owned(),
-            ANDROID_KEYSTORE.to_owned(),
-        )
-        .err_internal()?;
+        for _ in 0..2 {
+            let kps = wrapper::key_generation::builder::Builder::new(
+                &env,
+                key_id.to_owned(),
+                1 | 2 | 4 | 8,
+            )
+            .err_internal()?
+            .set_digests(&env, vec!["SHA-256".to_owned(), "SHA-512".to_owned()])
+            .err_internal()?
+            .set_encryption_paddings(&env, vec!["PKCS1Padding".to_owned()])
+            .err_internal()?
+            .set_signature_paddings(&env, vec!["PKCS1".to_owned()])
+            .err_internal()?
+            .set_is_strongbox_backed(&env, strongbox_backed)
+            .err_internal()?
+            .build(&env)
+            .err_internal()?;
 
-        kpg.initialize(&env, kps.raw.as_obj()).err_internal()?;
-        kpg.generateKeyPair(&env).err_internal()?;
+            kpg = wrapper::key_generation::key_pair_generator::jni::KeyPairGenerator::getInstance(
+                &env,
+                algorithm.to_owned(),
+                ANDROID_KEYSTORE.to_owned(),
+            )
+            .err_internal()?;
+
+            if let Err(_) = kpg.initialize(&env, kps.raw.as_obj()).err_internal() {
+                continue;
+            }
+
+            match kpg.generateKeyPair(&env).err_internal() {
+                Ok(_) => {
+                    break;
+                }
+                Err(e) => {
+                    if !strongbox_backed {
+                        return Err(SecurityModuleError::Tpm(TpmError::InternalError(Box::new(
+                            e,
+                        ))));
+                    }
+                }
+            }
+            strongbox_backed = false;
+        }
 
         debug!("key generated");
 
