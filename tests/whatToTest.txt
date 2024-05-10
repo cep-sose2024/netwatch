@@ -1,0 +1,7 @@
+1. Java Environment exists?
+2. SE exists?
+3. TEE exists?
+4. Encryption Algorithms working?
+5. Decryption Algorithms working?
+6. SE is used?
+7. TEE is used?
