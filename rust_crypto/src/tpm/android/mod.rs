@@ -1,5 +1,6 @@
 pub(crate) mod error;
 pub mod knox;
+pub(crate) mod utils;
 pub(crate) mod wrapper;
 
 use robusta_jni::jni::objects::JObject;
@@ -101,19 +102,9 @@ impl Provider for AndroidProvider {
     fn create_key(&mut self, key_id: &str) -> Result<(), SecurityModuleError> {
         info!("generating key! {}", key_id);
 
-        // error if not initialized
-        let key_algo = self
-            .key_algo
-            .as_ref()
-            .ok_or(SecurityModuleError::InitializationError(
-                "Module is not initialized".to_owned(),
-            ))?;
-
-        // check if we need RSA or EC
-        let algorithm = match key_algo {
-            AsymmetricEncryption::Rsa(_) => "RSA",
-            AsymmetricEncryption::Ecc(_) => "EC",
-        };
+        // errors if not initialized
+        let algorithm = self.get_algorithm()?;
+        let digest = self.get_digest()?;
 
         let env = self
             .vm
@@ -126,53 +117,35 @@ impl Provider for AndroidProvider {
                 )
             })?;
 
-        let mut kpg;
-        let mut strongbox_backed = true;
+        let strongbox_backed = true;
 
-        for _ in 0..2 {
-            let kps = wrapper::key_generation::builder::Builder::new(
-                &env,
-                key_id.to_owned(),
-                1 | 2 | 4 | 8,
-            )
-            .err_internal()?
-            .set_digests(&env, vec!["SHA-256".to_owned(), "SHA-512".to_owned()])
-            .err_internal()?
-            .set_encryption_paddings(&env, vec!["PKCS1Padding".to_owned()])
-            .err_internal()?
-            .set_signature_paddings(&env, vec!["PKCS1".to_owned()])
-            .err_internal()?
-            .set_is_strongbox_backed(&env, strongbox_backed)
-            .err_internal()?
-            .build(&env)
-            .err_internal()?;
+        let kps_builder =
+            wrapper::key_generation::builder::Builder::new(&env, key_id.to_owned(), 1 | 2 | 4 | 8)
+                .err_internal()?
+                .set_digests(&env, vec![digest])
+                .err_internal()?
+                .set_encryption_paddings(&env, vec!["PKCS1Padding".to_owned()])
+                .err_internal()?
+                .set_signature_paddings(&env, vec!["PKCS1".to_owned()])
+                .err_internal()?
+                .set_is_strongbox_backed(&env, strongbox_backed)
+                .err_internal()?;
 
-            kpg = wrapper::key_generation::key_pair_generator::jni::KeyPairGenerator::getInstance(
-                &env,
-                algorithm.to_owned(),
-                ANDROID_KEYSTORE.to_owned(),
-            )
-            .err_internal()?;
+        // TODO: if we have a key size, set it
+        self.get_key_size();
 
-            if let Err(_) = kpg.initialize(&env, kps.raw.as_obj()).err_internal() {
-                continue;
-            }
+        let kps = kps_builder.build(&env).err_internal()?;
 
-            match kpg.generateKeyPair(&env).err_internal() {
-                Ok(_) => {
-                    break;
-                }
-                Err(e) => {
-                    if !strongbox_backed {
-                        return Err(SecurityModuleError::Tpm(TpmError::InternalError(Box::new(
-                            e,
-                        ))));
-                    }
-                }
-            }
+        let kpg = wrapper::key_generation::key_pair_generator::jni::KeyPairGenerator::getInstance(
+            &env,
+            algorithm.to_owned(),
+            ANDROID_KEYSTORE.to_owned(),
+        )
+        .err_internal()?;
 
-            strongbox_backed = false;
-        }
+        kpg.initialize(&env, kps.raw.as_obj()).err_internal()?;
+
+        kpg.generateKeyPair(&env).err_internal()?;
 
         debug!("key generated");
 
