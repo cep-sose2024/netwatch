@@ -13,7 +13,11 @@ impl std::fmt::Display for JavaException {
 
 impl std::error::Error for JavaException {}
 
+/// This allows converting the JNI result into a `TpmError` result.
 impl<T> ToTpmError<T> for robusta_jni::jni::errors::Result<T> {
+    /// Converts the JNI result into a `TpmError` result.
+    /// If a Java exception was thrown, it retrieves the exception message and puts it into the error.
+    /// If no exception was thrown, it returns the JNI error as the `TpmError`.
     fn err_internal(self) -> Result<T, TpmError> {
         match self {
             Ok(v) => Ok(v),

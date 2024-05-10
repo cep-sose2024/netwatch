@@ -5,11 +5,25 @@ use robusta_jni::jni::objects::{AutoLocal, JObject, JValue};
 use robusta_jni::jni::sys::jsize;
 use robusta_jni::jni::JNIEnv;
 
+/// Builder for creating `KeyGenParameterSpec` objects.
+/// This class is an inner class of `KeyGenParameterSpec`. For that reason, it could not
+/// be implemented using the help of `robusta_jni`. `robusta_jni` does not support inner classes.
 pub struct Builder<'env: 'borrow, 'borrow> {
     raw: AutoLocal<'env, 'borrow>,
 }
 
 impl<'env: 'borrow, 'borrow> Builder<'env, 'borrow> {
+    /// Creates a new `Builder` instance.
+    ///
+    /// # Arguments
+    ///
+    /// * `env` - The JNI environment.
+    /// * `keystore_alias` - The alias for the keystore.
+    /// * `purposes` - The purposes for which the key can be used.
+    ///
+    /// # Returns
+    ///
+    /// A `JniResult` containing the new `Builder` instance.
     pub fn new(
         env: &'borrow JNIEnv<'env>,
         keystore_alias: String,
@@ -24,6 +38,17 @@ impl<'env: 'borrow, 'borrow> Builder<'env, 'borrow> {
         })
     }
 
+    /// Sets the digests for the key.
+    ///
+    /// # Arguments
+    ///
+    /// * `self` - The `Builder` instance.
+    /// * `env` - The JNI environment.
+    /// * `digests` - The digests to set.
+    ///
+    /// # Returns
+    ///
+    /// A `JniResult` containing the updated `Builder` instance.
     pub fn set_digests(
         mut self,
         env: &'borrow JNIEnv<'env>,
@@ -47,6 +72,17 @@ impl<'env: 'borrow, 'borrow> Builder<'env, 'borrow> {
         Ok(self)
     }
 
+    /// Sets the encryption paddings for the key.
+    ///
+    /// # Arguments
+    ///
+    /// * `self` - The `Builder` instance.
+    /// * `env` - The JNI environment.
+    /// * `paddings` - The encryption paddings to set.
+    ///
+    /// # Returns
+    ///
+    /// A `JniResult` containing the updated `Builder` instance.
     pub fn set_encryption_paddings(
         mut self,
         env: &'borrow JNIEnv<'env>,
@@ -70,6 +106,17 @@ impl<'env: 'borrow, 'borrow> Builder<'env, 'borrow> {
         Ok(self)
     }
 
+    /// Sets the signature paddings for the key.
+    ///
+    /// # Arguments
+    ///
+    /// * `self` - The `Builder` instance.
+    /// * `env` - The JNI environment.
+    /// * `paddings` - The signature paddings to set.
+    ///
+    /// # Returns
+    ///
+    /// A `JniResult` containing the updated `Builder` instance.
     pub fn set_signature_paddings(
         mut self,
         env: &'borrow JNIEnv<'env>,
@@ -93,6 +140,17 @@ impl<'env: 'borrow, 'borrow> Builder<'env, 'borrow> {
         Ok(self)
     }
 
+    /// Sets whether the key is backed by a strongbox.
+    ///
+    /// # Arguments
+    ///
+    /// * `self` - The `Builder` instance.
+    /// * `env` - The JNI environment.
+    /// * `is_strongbox_backed` - Whether the key is strongbox backed.
+    ///
+    /// # Returns
+    ///
+    /// A `JniResult` containing the updated `Builder` instance.
     pub fn set_is_strongbox_backed(
         mut self,
         env: &'borrow JNIEnv<'env>,
@@ -108,6 +166,16 @@ impl<'env: 'borrow, 'borrow> Builder<'env, 'borrow> {
         Ok(self)
     }
 
+    /// Builds the `KeyGenParameterSpec` object.
+    ///
+    /// # Arguments
+    ///
+    /// * `self` - The `Builder` instance.
+    /// * `env` - The JNI environment.
+    ///
+    /// # Returns
+    ///
+    /// A `JniResult` containing the built `KeyGenParameterSpec` object.
     pub fn build(
         self,
         env: &'borrow JNIEnv<'env>,

@@ -1,6 +1,7 @@
 use robusta_jni::bridge;
 
 #[bridge]
+/// This module contains the JNI bindings for the Cipher class in the javax.crypto package.
 pub mod jni {
     use robusta_jni::{
         convert::{IntoJavaValue, Signature, TryFromJavaValue, TryIntoJavaValue},
@@ -12,6 +13,7 @@ pub mod jni {
         },
     };
 
+    /// Represents a Cipher object in Java.
     #[derive(Signature, TryIntoJavaValue, IntoJavaValue, TryFromJavaValue)]
     #[package(javax.crypto)]
     pub struct Cipher<'env: 'borrow, 'borrow> {
@@ -20,12 +22,33 @@ pub mod jni {
     }
 
     impl<'env: 'borrow, 'borrow> Cipher<'env, 'borrow> {
+        /// Creates a new instance of the Cipher class.
+        ///
+        /// # Arguments
+        ///
+        /// * `env` - The JNIEnv object.
+        /// * `transformation` - the name of the transformation, e.g., DES/CBC/PKCS5Padding. See the Cipher section in the Java Cryptography Architecture Standard Algorithm Name Documentation for information about standard transformation names.
+        ///
+        /// # Returns
+        ///
+        /// Returns a Cipher object that implements the specified transformation.
         pub extern "java" fn getInstance(
             env: &'borrow JNIEnv<'env>,
             transformation: String,
         ) -> JniResult<Self> {
         }
 
+        /// Initializes the Cipher object with the specified operation mode and key.
+        ///
+        /// # Arguments
+        ///
+        /// * `env` - The JNIEnv object.
+        /// * `opmode` - The operation mode.
+        /// * `key` - The key object.
+        ///
+        /// # Returns
+        ///
+        /// Returns a JniResult indicating success or failure.
         pub extern "java" fn init(
             &self,
             env: &'borrow JNIEnv<'env>,
@@ -34,6 +57,16 @@ pub mod jni {
         ) -> JniResult<()> {
         }
 
+        /// Performs the final operation of the Cipher, processing any remaining data.
+        ///
+        /// # Arguments
+        ///
+        /// * `env` - The JNIEnv object.
+        /// * `input` - The input data.
+        ///
+        /// # Returns
+        ///
+        /// Returns a JniResult containing the output data.
         pub fn doFinal(&self, env: &JNIEnv, input: Vec<u8>) -> JniResult<Vec<u8>> {
             let input_array = env.byte_array_from_slice(&input)?;
 

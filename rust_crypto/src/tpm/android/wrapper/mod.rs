@@ -23,16 +23,9 @@ pub(super) fn get_java_vm() -> Result<JavaVM, TpmError> {
     ) -> jint;
     pub const JNI_GET_JAVA_VMS_NAME: &[u8] = b"JNI_GetCreatedJavaVMs";
 
-    #[cfg(unix)]
     let lib = libloading::os::unix::Library::this();
     // let lib = unsafe { libloading::os::unix::Library::new("libart.so") }
     // .map_err(|e| TpmError::InitializationError(format!("could not find libart.so: {e}")))?;
-
-    // this makes no sense, our code is always compiling as unix
-    #[cfg(windows)]
-    let lib = libloading::os::windows::Library::this().map_err(|_| {
-        TpmError::InitializationError("could not load process, this should never happen".to_owned())
-    });
 
     let get_created_java_vms: JniGetCreatedJavaVms = unsafe {
         *lib.get(JNI_GET_JAVA_VMS_NAME).map_err(|e| {

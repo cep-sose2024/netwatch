@@ -24,12 +24,13 @@ use self::wrapper::get_java_vm;
 const ANDROID_KEYSTORE: &str = "AndroidKeyStore";
 
 /// A TPM-based cryptographic provider for managing cryptographic keys and performing
-/// cryptographic operations in a Windows environment.
+/// cryptographic operations in an Android environment.
 ///
-/// This provider leverages the Windows Cryptography API: Next Generation (CNG) to interact
-/// with a Trusted Platform Module (TPM) for operations like signing, encryption, and decryption.
+/// This provider uses the Android Keystore API to interact
+/// with the Trusted Execution Environment (TEE), or the devices Secure Element(Like the Titan M chip in a Google Pixel)
+/// for operations like signing, encryption, and decryption.
 /// It provides a secure and hardware-backed solution for managing cryptographic keys and performing
-/// cryptographic operations on Windows platforms.
+/// cryptographic operations on Android.
 pub(crate) struct AndroidProvider {
     key_id: String,
     key_algo: Option<AsymmetricEncryption>,
@@ -62,7 +63,40 @@ impl AndroidProvider {
     }
 }
 
+/// Implementation of the `Provider` trait for the Android platform.
+///
+/// This struct provides methods for key generation, key loading, and module initialization
+/// specific to Android.
 impl Provider for AndroidProvider {
+    /// Generates a key with the parameters specified when the module was initialized.
+    ///
+    /// The key is generated using the Android Keystore API and is stored securely in the device's
+    /// Trusted Execution Environment (TEE) or Secure Element. It first attempts to generate a key
+    /// withing the devices StrongBox (Secure Element), and if that fails, because it is not available,
+    /// it falls back to the TEE. We have to do this because the KeyStore does not automatically select
+    /// the highest security level available.
+    ///
+    /// # Java Example
+    ///
+    /// ```java
+    /// KeyPairGenerator kpg = KeyPairGenerator.getInstance(
+    ///         KeyProperties.KEY_ALGORITHM_EC, "AndroidKeyStore");
+    /// kpg.initialize(new KeyGenParameterSpec.Builder(
+    ///         alias,
+    ///         KeyProperties.PURPOSE_SIGN | KeyProperties.PURPOSE_VERIFY)
+    ///         .setDigests(KeyProperties.DIGEST_SHA256,
+    ///             KeyProperties.DIGEST_SHA512)
+    ///         .build());
+    /// KeyPair kp = kpg.generateKeyPair();
+    /// ```
+    ///
+    /// # Arguments
+    ///
+    /// * `key_id` - The identifier for the key.
+    ///
+    /// # Returns
+    ///
+    /// Returns `Ok(())` if the key generation is successful, otherwise returns an error of type `SecurityModuleError`.
     #[instrument]
     fn create_key(&mut self, key_id: &str) -> Result<(), SecurityModuleError> {
         info!("generating key! {}", key_id);
@@ -145,12 +179,33 @@ impl Provider for AndroidProvider {
         Ok(())
     }
 
+    /// Loads a key with the specified `key_id`.
+    ///
+    /// # Arguments
+    ///
+    /// * `key_id` - The identifier for the key.
+    ///
+    /// # Returns
+    ///
+    /// Returns `Ok(())` if the key loading is successful, otherwise returns an error of type `SecurityModuleError`.
     #[instrument]
     fn load_key(&mut self, key_id: &str) -> Result<(), SecurityModuleError> {
         self.key_id = key_id.to_owned();
         Ok(())
     }
 
+    /// Initializes the module with the specified parameters.
+    ///
+    /// # Arguments
+    ///
+    /// * `key_algorithm` - The asymmetric encryption algorithm to be used.
+    /// * `sym_algorithm` - The block cipher algorithm to be used (optional).
+    /// * `hash` - The hash algorithm to be used (optional).
+    /// * `key_usages` - The list of key usages.
+    ///
+    /// # Returns
+    ///
+    /// Returns `Ok(())` if the module initialization is successful, otherwise returns an error of type `SecurityModuleError`.
     #[instrument]
     fn initialize_module(
         &mut self,
@@ -168,7 +223,35 @@ impl Provider for AndroidProvider {
     }
 }
 
+/// Implementation of the `KeyHandle` trait for the `AndroidProvider` struct.
+/// All of the functions in this KeyHandle are basically re-implementations
+/// of the equivalent Java functions in the Android KeyStore API.
 impl KeyHandle for AndroidProvider {
+    /// Signs the given data using the Android KeyStore.
+    ///
+    /// # Arguments
+    ///
+    /// * `data` - Byte array of data to be signed.
+    ///
+    /// # Java Example
+    ///
+    /// ```java
+    /// KeyStore ks = KeyStore.getInstance("AndroidKeyStore");
+    /// ks.load(null);
+    /// KeyStore.Entry entry = ks.getEntry(alias, null);
+    /// if (!(entry instanceof PrivateKeyEntry)) {
+    ///     Log.w(TAG, "Not an instance of a PrivateKeyEntry");
+    ///     return null;
+    /// }
+    /// Signature s = Signature.getInstance("SHA256withECDSA");
+    /// s.initSign(((PrivateKeyEntry) entry).getPrivateKey());
+    /// s.update(data);
+    /// byte[] signature = s.sign();
+    /// ```
+    ///
+    /// # Returns
+    ///
+    /// Returns a `Result` containing the signed data as a `Vec<u8>` if successful, or a `SecurityModuleError` if an error occurs.
     #[instrument]
     fn sign_data(&self, data: &[u8]) -> Result<Vec<u8>, SecurityModuleError> {
         // check that signing is allowed
@@ -225,6 +308,27 @@ impl KeyHandle for AndroidProvider {
         Ok(output)
     }
 
+    /// Decrypts the given encrypted data using the Android KeyStore.
+    ///
+    /// # Arguments
+    ///
+    /// * `encrypted_data` - The encrypted data to be decrypted.
+    ///
+    /// # Java Example
+    ///
+    /// ```java
+    /// KeyStore keyStore = KeyStore.getInstance(ANDROID_KEYSTORE);
+    /// keyStore.load(null);
+    /// PrivateKey privateKey = (PrivateKey) keyStore.getKey(KEYNAME, null);
+    /// PublicKey publicKey = keyStore.getCertificate(KEYNAME).getPublicKey();
+    /// Cipher cipher = Cipher.getInstance("RSA/ECB/PKCS1Padding");
+    /// cipher.init(Cipher.DECRYPT_MODE, privateKey);
+    /// byte[] decrypted = cipher.doFinal(encrypted);
+    /// ```
+    ///
+    /// # Returns
+    ///
+    /// Returns a `Result` containing the decrypted data as a `Vec<u8>` if successful, or a `SecurityModuleError` if an error occurs.
     #[instrument]
     fn decrypt_data(&self, encrypted_data: &[u8]) -> Result<Vec<u8>, SecurityModuleError> {
         info!("decrypting data");
@@ -271,6 +375,28 @@ impl KeyHandle for AndroidProvider {
         Ok(decrypted)
     }
 
+    /// Encrypts the given data using the Android KeyStore.
+    ///
+    /// # Arguments
+    ///
+    /// * `data` - The data to be encrypted.
+    ///
+    /// # Java Example
+    ///
+    /// ```java
+    /// KeyStore keyStore = KeyStore.getInstance(ANDROID_KEYSTORE);
+    /// keyStore.load(null);
+    /// PrivateKey privateKey = (PrivateKey) keyStore.getKey(KEYNAME, null);
+    /// PublicKey publicKey = keyStore.getCertificate(KEYNAME).getPublicKey();
+    /// Cipher cipher = Cipher.getInstance("RSA/ECB/PKCS1Padding");
+    /// byte[] encrypted;
+    /// cipher.init(Cipher.ENCRYPT_MODE, publicKey);
+    /// encrypted = cipher.doFinal(text.getBytes());
+    /// ```
+    ///
+    /// # Returns
+    ///
+    /// Returns a `Result` containing the encrypted data as a `Vec<u8>` if successful, or a `SecurityModuleError` if an error occurs.
     #[instrument]
     fn encrypt_data(&self, data: &[u8]) -> Result<Vec<u8>, SecurityModuleError> {
         info!("encrypting");
@@ -321,6 +447,32 @@ impl KeyHandle for AndroidProvider {
         Ok(encrypted)
     }
 
+    /// Verifies the signature of the given data using the Android KeyStore.
+    ///
+    /// # Arguments
+    ///
+    /// * `data` - The data whose signature needs to be verified.
+    /// * `signature` - The signature to be verified.
+    ///
+    /// # Java Example
+    ///
+    /// ```java
+    /// KeyStore ks = KeyStore.getInstance("AndroidKeyStore");
+    /// ks.load(null);
+    /// KeyStore.Entry entry = ks.getEntry(alias, null);
+    /// if (!(entry instanceof PrivateKeyEntry)) {
+    ///     Log.w(TAG, "Not an instance of a PrivateKeyEntry");
+    ///     return false;
+    /// }
+    /// Signature s = Signature.getInstance("SHA256withECDSA");
+    /// s.initVerify(((PrivateKeyEntry) entry).getCertificate());
+    /// s.update(data);
+    /// boolean valid = s.verify(signature);
+    /// ```
+    ///
+    /// # Returns
+    ///
+    /// Returns a `Result` containing `true` if the signature is valid, `false` otherwise, or a `SecurityModuleError` if an error occurs.
     #[instrument]
     fn verify_signature(&self, data: &[u8], signature: &[u8]) -> Result<bool, SecurityModuleError> {
         info!("verifiying");
