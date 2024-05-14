@@ -1,4 +1,4 @@
-package com.example.greetings
+package com.example.netwatch
 
 import androidx.test.platform.app.InstrumentationRegistry
 import androidx.test.ext.junit.runners.AndroidJUnit4

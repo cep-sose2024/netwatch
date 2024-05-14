@@ -1,4 +1,4 @@
-package com.example.greetings;
+package com.example.netwatch;
 
 import android.util.Base64;
 import android.util.Log;

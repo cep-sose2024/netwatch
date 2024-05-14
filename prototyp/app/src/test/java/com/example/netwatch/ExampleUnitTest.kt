@@ -1,4 +1,4 @@
-package com.example.greetings
+package com.example.netwatch
 
 import org.junit.Test
 

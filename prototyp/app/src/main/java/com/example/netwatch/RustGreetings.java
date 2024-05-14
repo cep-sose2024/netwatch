@@ -1,4 +1,4 @@
-package com.example.greetings;
+package com.example.netwatch;
 
 public class RustGreetings {
     public static native void generateNewKey(String key_id, String algo);

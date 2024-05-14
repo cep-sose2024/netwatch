@@ -1,4 +1,4 @@
-package com.example.greetings.ui.theme
+package com.example.netwatch.ui.theme
 
 import android.app.Activity
 import android.os.Build
