@@ -1,0 +1,323 @@
+use robusta_jni::convert::IntoJavaValue;
+
+use crate::common::crypto::{algorithms, KeyUsage};
+use crate::common::factory::SecModules;
+use crate::common::factory::SecurityModule;
+use crate::tpm::android::*;
+use crate::tpm::core::instance::AndroidTpmType;
+use crate::tpm::core::instance::TpmType;
+
+#[test]
+fn initializ_module_test() {
+    let security_module = SecModules::get_instance(
+        "2323".to_string(),
+        SecurityModule::Tpm(TpmType::Android(AndroidTpmType::Keystore)),
+    );
+
+    let x = security_module.unwrap();
+    let mut provider = x.lock().unwrap();
+    let key_algorithm =
+        algorithms::encryption::AsymmetricEncryption::Rsa(algorithms::KeyBits::Bits1024);
+    let hash = algorithms::hashes::Hash::Sha1;
+    let key_usages = vec![KeyUsage::SignEncrypt];
+    provider
+        .initialize_module(key_algorithm, None, Some(hash), key_usages)
+        .unwrap();
+}
+
+#[test]
+fn key_creation_test() {
+    let security_module = SecModules::get_instance(
+        "2323".to_string(),
+        SecurityModule::Tpm(TpmType::Android(AndroidTpmType::Keystore)),
+    );
+
+    let x = security_module.unwrap();
+    let mut provider = x.lock().unwrap();
+    let key_algorithm =
+        algorithms::encryption::AsymmetricEncryption::Rsa(algorithms::KeyBits::Bits1024);
+    let hash = algorithms::hashes::Hash::Sha1;
+    let key_usages = vec![KeyUsage::SignEncrypt];
+    provider
+        .initialize_module(key_algorithm, None, Some(hash), key_usages)
+        .unwrap();
+    provider.create_key("2320").unwrap();
+}
+
+#[test]
+fn key_load_test() {
+    let security_module = SecModules::get_instance(
+        "2323".to_string(),
+        SecurityModule::Tpm(TpmType::Android(AndroidTpmType::Keystore)),
+    );
+
+    let x = security_module.unwrap();
+    let mut provider = x.lock().unwrap();
+    let key_algorithm =
+        algorithms::encryption::AsymmetricEncryption::Rsa(algorithms::KeyBits::Bits1024);
+    let hash = algorithms::hashes::Hash::Sha1;
+    let key_usages = vec![KeyUsage::SignEncrypt];
+    provider
+        .initialize_module(key_algorithm, None, Some(hash), key_usages)
+        .unwrap();
+    provider.create_key("2322").unwrap();
+    provider.load_key("2322").unwrap();
+}
+
+/*
+----------------TESTING different KeyBits------------------------
+*/
+
+#[test]
+fn key_creation_bit_128_test() {
+    let security_module = SecModules::get_instance(
+        "2323".to_string(),
+        SecurityModule::Tpm(TpmType::Android(AndroidTpmType::Keystore)),
+    );
+
+    let x = security_module.unwrap();
+    let mut provider = x.lock().unwrap();
+    let key_algorithm =
+        algorithms::encryption::AsymmetricEncryption::Rsa(algorithms::KeyBits::Bits128);
+    let hash = algorithms::hashes::Hash::Sha1;
+    let key_usages = vec![KeyUsage::SignEncrypt];
+    provider
+        .initialize_module(key_algorithm, None, Some(hash), key_usages)
+        .unwrap();
+    provider.create_key("23128").unwrap();
+}
+
+#[test]
+fn key_creation_bit_192_test() {
+    let security_module = SecModules::get_instance(
+        "2323".to_string(),
+        SecurityModule::Tpm(TpmType::Android(AndroidTpmType::Keystore)),
+    );
+
+    let x = security_module.unwrap();
+    let mut provider = x.lock().unwrap();
+    let key_algorithm =
+        algorithms::encryption::AsymmetricEncryption::Rsa(algorithms::KeyBits::Bits192);
+    let hash = algorithms::hashes::Hash::Sha1;
+    let key_usages = vec![KeyUsage::SignEncrypt];
+    provider
+        .initialize_module(key_algorithm, None, Some(hash), key_usages)
+        .unwrap();
+    provider.create_key("23192").unwrap();
+}
+
+#[test]
+fn key_creation_bit_256_test() {
+    let security_module = SecModules::get_instance(
+        "2323".to_string(),
+        SecurityModule::Tpm(TpmType::Android(AndroidTpmType::Keystore)),
+    );
+
+    let x = security_module.unwrap();
+    let mut provider = x.lock().unwrap();
+    let key_algorithm =
+        algorithms::encryption::AsymmetricEncryption::Rsa(algorithms::KeyBits::Bits256);
+    let hash = algorithms::hashes::Hash::Sha1;
+    let key_usages = vec![KeyUsage::SignEncrypt];
+    provider
+        .initialize_module(key_algorithm, None, Some(hash), key_usages)
+        .unwrap();
+    provider.create_key("23256").unwrap();
+}
+
+#[test]
+fn key_creation_bit_512_test() {
+    let security_module = SecModules::get_instance(
+        "2323".to_string(),
+        SecurityModule::Tpm(TpmType::Android(AndroidTpmType::Keystore)),
+    );
+
+    let x = security_module.unwrap();
+    let mut provider = x.lock().unwrap();
+    let key_algorithm =
+        algorithms::encryption::AsymmetricEncryption::Rsa(algorithms::KeyBits::Bits512);
+    let hash = algorithms::hashes::Hash::Sha1;
+    let key_usages = vec![KeyUsage::SignEncrypt];
+    provider
+        .initialize_module(key_algorithm, None, Some(hash), key_usages)
+        .unwrap();
+    provider.create_key("23512").unwrap();
+}
+
+#[test]
+fn key_creation_bit_1024_test() {
+    let security_module = SecModules::get_instance(
+        "2323".to_string(),
+        SecurityModule::Tpm(TpmType::Android(AndroidTpmType::Keystore)),
+    );
+
+    let x = security_module.unwrap();
+    let mut provider = x.lock().unwrap();
+    let key_algorithm =
+        algorithms::encryption::AsymmetricEncryption::Rsa(algorithms::KeyBits::Bits1024);
+    let hash = algorithms::hashes::Hash::Sha1;
+    let key_usages = vec![KeyUsage::SignEncrypt];
+    provider
+        .initialize_module(key_algorithm, None, Some(hash), key_usages)
+        .unwrap();
+    provider.create_key("231024").unwrap();
+}
+
+#[test]
+fn key_creation_bit_2048_test() {
+    let security_module = SecModules::get_instance(
+        "2323".to_string(),
+        SecurityModule::Tpm(TpmType::Android(AndroidTpmType::Keystore)),
+    );
+
+    let x = security_module.unwrap();
+    let mut provider = x.lock().unwrap();
+    let key_algorithm =
+        algorithms::encryption::AsymmetricEncryption::Rsa(algorithms::KeyBits::Bits2048);
+    let hash = algorithms::hashes::Hash::Sha1;
+    let key_usages = vec![KeyUsage::SignEncrypt];
+    provider
+        .initialize_module(key_algorithm, None, Some(hash), key_usages)
+        .unwrap();
+    provider.create_key("232048").unwrap();
+}
+
+#[test]
+fn key_creation_bit_3072_test() {
+    let security_module = SecModules::get_instance(
+        "2323".to_string(),
+        SecurityModule::Tpm(TpmType::Android(AndroidTpmType::Keystore)),
+    );
+
+    let x = security_module.unwrap();
+    let mut provider = x.lock().unwrap();
+    let key_algorithm =
+        algorithms::encryption::AsymmetricEncryption::Rsa(algorithms::KeyBits::Bits3072);
+    let hash = algorithms::hashes::Hash::Sha1;
+    let key_usages = vec![KeyUsage::SignEncrypt];
+    provider
+        .initialize_module(key_algorithm, None, Some(hash), key_usages)
+        .unwrap();
+    provider.create_key("233072").unwrap();
+}
+
+#[test]
+fn key_creation_bit_4096_test() {
+    let security_module = SecModules::get_instance(
+        "2323".to_string(),
+        SecurityModule::Tpm(TpmType::Android(AndroidTpmType::Keystore)),
+    );
+
+    let x = security_module.unwrap();
+    let mut provider = x.lock().unwrap();
+    let key_algorithm =
+        algorithms::encryption::AsymmetricEncryption::Rsa(algorithms::KeyBits::Bits4096);
+    let hash = algorithms::hashes::Hash::Sha1;
+    let key_usages = vec![KeyUsage::SignEncrypt];
+    provider
+        .initialize_module(key_algorithm, None, Some(hash), key_usages)
+        .unwrap();
+    provider.create_key("234096").unwrap();
+}
+
+#[test]
+fn key_creation_bit_8192_test() {
+    let security_module = SecModules::get_instance(
+        "2323".to_string(),
+        SecurityModule::Tpm(TpmType::Android(AndroidTpmType::Keystore)),
+    );
+
+    let x = security_module.unwrap();
+    let mut provider = x.lock().unwrap();
+    let key_algorithm =
+        algorithms::encryption::AsymmetricEncryption::Rsa(algorithms::KeyBits::Bits8192);
+    let hash = algorithms::hashes::Hash::Sha1;
+    let key_usages = vec![KeyUsage::SignEncrypt];
+    provider
+        .initialize_module(key_algorithm, None, Some(hash), key_usages)
+        .unwrap();
+    provider.create_key("238192").unwrap();
+}
+
+/*
+TESTING Hashes
+
+*/
+
+#[test]
+fn key_creation_hash_md2_test() {
+    let security_module = SecModules::get_instance(
+        "2323".to_string(),
+        SecurityModule::Tpm(TpmType::Android(AndroidTpmType::Keystore)),
+    );
+
+    let x = security_module.unwrap();
+    let mut provider = x.lock().unwrap();
+    let key_algorithm =
+        algorithms::encryption::AsymmetricEncryption::Rsa(algorithms::KeyBits::Bits1024);
+    let hash = algorithms::hashes::Hash::Md2;
+    let key_usages = vec![KeyUsage::SignEncrypt];
+    provider
+        .initialize_module(key_algorithm, None, Some(hash), key_usages)
+        .unwrap();
+    provider.create_key("231024").unwrap();
+}
+
+#[test]
+fn key_creation_hash_md4_test() {
+    let security_module = SecModules::get_instance(
+        "2323".to_string(),
+        SecurityModule::Tpm(TpmType::Android(AndroidTpmType::Keystore)),
+    );
+
+    let x = security_module.unwrap();
+    let mut provider = x.lock().unwrap();
+    let key_algorithm =
+        algorithms::encryption::AsymmetricEncryption::Rsa(algorithms::KeyBits::Bits1024);
+    let hash = algorithms::hashes::Hash::Md4;
+    let key_usages = vec![KeyUsage::SignEncrypt];
+    provider
+        .initialize_module(key_algorithm, None, Some(hash), key_usages)
+        .unwrap();
+    provider.create_key("231024").unwrap();
+}
+
+#[test]
+fn key_creation_hash_md5_test() {
+    let security_module = SecModules::get_instance(
+        "2323".to_string(),
+        SecurityModule::Tpm(TpmType::Android(AndroidTpmType::Keystore)),
+    );
+
+    let x = security_module.unwrap();
+    let mut provider = x.lock().unwrap();
+    let key_algorithm =
+        algorithms::encryption::AsymmetricEncryption::Rsa(algorithms::KeyBits::Bits1024);
+    let hash = algorithms::hashes::Hash::Md5;
+    let key_usages = vec![KeyUsage::SignEncrypt];
+    provider
+        .initialize_module(key_algorithm, None, Some(hash), key_usages)
+        .unwrap();
+    provider.create_key("231024").unwrap();
+}
+
+#[test]
+fn key_creation_hash_ripemd160_test() {
+    let security_module = SecModules::get_instance(
+        "2323".to_string(),
+        SecurityModule::Tpm(TpmType::Android(AndroidTpmType::Keystore)),
+    );
+
+    let x = security_module.unwrap();
+    let mut provider = x.lock().unwrap();
+    let key_algorithm =
+        algorithms::encryption::AsymmetricEncryption::Rsa(algorithms::KeyBits::Bits1024);
+    let hash = algorithms::hashes::Hash::Ripemd160;
+    let key_usages = vec![KeyUsage::SignEncrypt];
+    provider
+        .initialize_module(key_algorithm, None, Some(hash), key_usages)
+        .unwrap();
+    provider.create_key("231024").unwrap();
+}
+
+//Test different Hashes, different KeyUsage, different Keybits.
