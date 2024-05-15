@@ -240,7 +240,8 @@ fn key_creation_bit_8192_test() {
 }
 
 /*
-TESTING Hashes
+
+---------------------TESTING Hashes-------------------
 
 */
 
@@ -260,7 +261,7 @@ fn key_creation_hash_md2_test() {
     provider
         .initialize_module(key_algorithm, None, Some(hash), key_usages)
         .unwrap();
-    provider.create_key("231024").unwrap();
+    provider.create_key("231025").unwrap();
 }
 
 #[test]
@@ -279,7 +280,7 @@ fn key_creation_hash_md4_test() {
     provider
         .initialize_module(key_algorithm, None, Some(hash), key_usages)
         .unwrap();
-    provider.create_key("231024").unwrap();
+    provider.create_key("231026").unwrap();
 }
 
 #[test]
@@ -298,8 +299,14 @@ fn key_creation_hash_md5_test() {
     provider
         .initialize_module(key_algorithm, None, Some(hash), key_usages)
         .unwrap();
-    provider.create_key("231024").unwrap();
+    provider.create_key("231027").unwrap();
 }
+
+/*
+
+------------Testing KeyUsages--------------
+
+*/
 
 #[test]
 fn key_creation_hash_ripemd160_test() {
@@ -317,7 +324,235 @@ fn key_creation_hash_ripemd160_test() {
     provider
         .initialize_module(key_algorithm, None, Some(hash), key_usages)
         .unwrap();
-    provider.create_key("231024").unwrap();
+    provider.create_key("231028").unwrap();
 }
 
-//Test different Hashes, different KeyUsage, different Keybits.
+#[test]
+fn key_creation_keyusage_clientauth_test() {
+    let security_module = SecModules::get_instance(
+        "2323".to_string(),
+        SecurityModule::Tpm(TpmType::Android(AndroidTpmType::Keystore)),
+    );
+
+    let x = security_module.unwrap();
+    let mut provider = x.lock().unwrap();
+    let key_algorithm =
+        algorithms::encryption::AsymmetricEncryption::Rsa(algorithms::KeyBits::Bits1024);
+    let hash = algorithms::hashes::Hash::Sha1;
+    let key_usages = vec![KeyUsage::ClientAuth];
+    provider
+        .initialize_module(key_algorithm, None, Some(hash), key_usages)
+        .unwrap();
+    provider.create_key("231029").unwrap();
+}
+
+#[test]
+fn key_creation_keyusage_decrypt_test() {
+    let security_module = SecModules::get_instance(
+        "2323".to_string(),
+        SecurityModule::Tpm(TpmType::Android(AndroidTpmType::Keystore)),
+    );
+
+    let x = security_module.unwrap();
+    let mut provider = x.lock().unwrap();
+    let key_algorithm =
+        algorithms::encryption::AsymmetricEncryption::Rsa(algorithms::KeyBits::Bits1024);
+    let hash = algorithms::hashes::Hash::Sha1;
+    let key_usages = vec![KeyUsage::Decrypt];
+    provider
+        .initialize_module(key_algorithm, None, Some(hash), key_usages)
+        .unwrap();
+    provider.create_key("231030").unwrap();
+}
+
+#[test]
+fn key_creation_keyusage_createx509_test() {
+    let security_module = SecModules::get_instance(
+        "2323".to_string(),
+        SecurityModule::Tpm(TpmType::Android(AndroidTpmType::Keystore)),
+    );
+
+    let x = security_module.unwrap();
+    let mut provider = x.lock().unwrap();
+    let key_algorithm =
+        algorithms::encryption::AsymmetricEncryption::Rsa(algorithms::KeyBits::Bits1024);
+    let hash = algorithms::hashes::Hash::Sha1;
+    let key_usages = vec![KeyUsage::CreateX509];
+    provider
+        .initialize_module(key_algorithm, None, Some(hash), key_usages)
+        .unwrap();
+    provider.create_key("231031").unwrap();
+}
+
+/*
+
+---------------Sign Data------------------
+
+*/
+
+#[test]
+fn sign_data_1_test() {
+    let security_module = SecModules::get_instance(
+        "2323".to_string(),
+        SecurityModule::Tpm(TpmType::Android(AndroidTpmType::Keystore)),
+    );
+
+    let x = security_module.unwrap();
+    let mut provider = x.lock().unwrap();
+    let key_algorithm =
+        algorithms::encryption::AsymmetricEncryption::Rsa(algorithms::KeyBits::Bits1024);
+    let hash = algorithms::hashes::Hash::Sha1;
+    let key_usages = vec![KeyUsage::SignEncrypt];
+    provider
+        .initialize_module(key_algorithm, None, Some(hash), key_usages)
+        .unwrap();
+
+    let data = b"testing";
+
+    provider.sign_data(data);
+}
+
+#[test]
+fn sign_data_2_test() {
+    let security_module = SecModules::get_instance(
+        "2323".to_string(),
+        SecurityModule::Tpm(TpmType::Android(AndroidTpmType::Keystore)),
+    );
+
+    let x = security_module.unwrap();
+    let mut provider = x.lock().unwrap();
+    let key_algorithm =
+        algorithms::encryption::AsymmetricEncryption::Rsa(algorithms::KeyBits::Bits1024);
+    let hash = algorithms::hashes::Hash::Sha1;
+    let key_usages = vec![KeyUsage::SignEncrypt];
+    provider
+        .initialize_module(key_algorithm, None, Some(hash), key_usages)
+        .unwrap();
+
+    let data = b"h";
+
+    provider.sign_data(data);
+}
+
+//How to expect a fail??
+#[test]
+fn sign_data_3_test() {
+    let security_module = SecModules::get_instance(
+        "2323".to_string(),
+        SecurityModule::Tpm(TpmType::Android(AndroidTpmType::Keystore)),
+    );
+
+    let x = security_module.unwrap();
+    let mut provider = x.lock().unwrap();
+    let key_algorithm =
+        algorithms::encryption::AsymmetricEncryption::Rsa(algorithms::KeyBits::Bits1024);
+    let hash = algorithms::hashes::Hash::Sha1;
+    let key_usages = vec![KeyUsage::SignEncrypt];
+    provider
+        .initialize_module(key_algorithm, None, Some(hash), key_usages)
+        .unwrap();
+
+    let data = b"";
+
+    provider.sign_data(data);
+}
+
+//How to expect a fail??
+#[test]
+fn sign_data_4_test() {
+    let security_module = SecModules::get_instance(
+        "2323".to_string(),
+        SecurityModule::Tpm(TpmType::Android(AndroidTpmType::Keystore)),
+    );
+
+    let x = security_module.unwrap();
+    let mut provider = x.lock().unwrap();
+    let key_algorithm =
+        algorithms::encryption::AsymmetricEncryption::Rsa(algorithms::KeyBits::Bits1024);
+    let hash = algorithms::hashes::Hash::Sha1;
+    let key_usages = vec![KeyUsage::SignEncrypt];
+    provider
+        .initialize_module(key_algorithm, None, Some(hash), key_usages)
+        .unwrap();
+
+    let data = b"overflowing";
+
+    provider.sign_data(data);
+}
+
+//Test different Key Ids => 0?
+
+#[test]
+fn verify_signature_1_test() {
+    let security_module = SecModules::get_instance(
+        "2323".to_string(),
+        SecurityModule::Tpm(TpmType::Android(AndroidTpmType::Keystore)),
+    );
+
+    let x = security_module.unwrap();
+    let mut provider = x.lock().unwrap();
+    let key_algorithm =
+        algorithms::encryption::AsymmetricEncryption::Rsa(algorithms::KeyBits::Bits1024);
+    let hash = algorithms::hashes::Hash::Sha1;
+    let key_usages = vec![KeyUsage::SignEncrypt];
+    provider
+        .initialize_module(key_algorithm, None, Some(hash), key_usages)
+        .unwrap();
+
+    let data = b"test";
+
+    let signature = provider.sign_data(data);
+    let verified = provider.verify_signature(data, signature);
+
+    assert_eq!(true, verified);
+}
+
+#[test]
+fn verify_signature_2_test() {
+    let security_module = SecModules::get_instance(
+        "2323".to_string(),
+        SecurityModule::Tpm(TpmType::Android(AndroidTpmType::Keystore)),
+    );
+
+    let x = security_module.unwrap();
+    let mut provider = x.lock().unwrap();
+    let key_algorithm =
+        algorithms::encryption::AsymmetricEncryption::Rsa(algorithms::KeyBits::Bits1024);
+    let hash = algorithms::hashes::Hash::Sha1;
+    let key_usages = vec![KeyUsage::SignEncrypt];
+    provider
+        .initialize_module(key_algorithm, None, Some(hash), key_usages)
+        .unwrap();
+
+    let data = b"testingX";
+
+    let signature = provider.sign_data(data);
+    let verified = provider.verify_signature(data, signature);
+
+    assert_eq!(True, verified);
+}
+
+#[test]
+fn verify_signature_3_test() {
+    let security_module = SecModules::get_instance(
+        "2323".to_string(),
+        SecurityModule::Tpm(TpmType::Android(AndroidTpmType::Keystore)),
+    );
+
+    let x = security_module.unwrap();
+    let mut provider = x.lock().unwrap();
+    let key_algorithm =
+        algorithms::encryption::AsymmetricEncryption::Rsa(algorithms::KeyBits::Bits1024);
+    let hash = algorithms::hashes::Hash::Sha1;
+    let key_usages = vec![KeyUsage::SignEncrypt];
+    provider
+        .initialize_module(key_algorithm, None, Some(hash), key_usages)
+        .unwrap();
+
+    let data = b"H";
+
+    let signature = provider.sign_data(data);
+    let verified = provider.verify_signature(data, signature);
+
+    assert_eq!(True, verified);
+}
