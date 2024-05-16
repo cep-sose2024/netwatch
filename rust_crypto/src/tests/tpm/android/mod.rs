@@ -501,8 +501,16 @@ fn verify_signature_1_test() {
 
     let data = b"test";
 
-    let signature = provider.sign_data(data);
-    let verified = provider.verify_signature(data, signature);
+    let signature = provider.sign_data(data).unwrap();
+
+    //Convert Vec<u8> to list u8
+
+    let mut signature_list: [u8;8] = [0,0,0,0,0,0,0,0];
+  
+  for (place, element) in signature_list.iter_mut().zip(signature.into_iter()) {
+    unsafe { std::ptr::write(place, element) };
+}
+    let verified = provider.verify_signature(data, &signature_list).unwrap_or_default();
 
     assert_eq!(true, verified);
 }
@@ -526,10 +534,19 @@ fn verify_signature_2_test() {
 
     let data = b"testingX";
 
-    let signature = provider.sign_data(data);
-    let verified = provider.verify_signature(data, signature);
+   
+    let signature = provider.sign_data(data).unwrap();
 
-    assert_eq!(True, verified);
+    //Convert Vec<u8> to list u8
+
+    let mut signature_list: [u8;8] = [0,0,0,0,0,0,0,0];
+  
+  for (place, element) in signature_list.iter_mut().zip(signature.into_iter()) {
+    unsafe { std::ptr::write(place, element) };
+}
+    let verified = provider.verify_signature(data, &signature_list).unwrap_or_default();
+
+    assert_eq!(true, verified);
 }
 
 #[test]
@@ -551,8 +568,18 @@ fn verify_signature_3_test() {
 
     let data = b"H";
 
-    let signature = provider.sign_data(data);
-    let verified = provider.verify_signature(data, signature);
 
-    assert_eq!(True, verified);
+    let signature = provider.sign_data(data).unwrap();
+
+    //Convert Vec<u8> to list u8
+
+    let mut signature_list: [u8;8] = [0,0,0,0,0,0,0,0];
+  
+  for (place, element) in signature_list.iter_mut().zip(signature.into_iter()) {
+    unsafe { std::ptr::write(place, element) };
+}
+    let verified = provider.verify_signature(data, &signature_list).unwrap_or_default();
+
+    assert_eq!(true, verified);
+
 }
