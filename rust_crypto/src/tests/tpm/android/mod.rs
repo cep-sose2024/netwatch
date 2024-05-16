@@ -505,12 +505,14 @@ fn verify_signature_1_test() {
 
     //Convert Vec<u8> to list u8
 
-    let mut signature_list: [u8;8] = [0,0,0,0,0,0,0,0];
-  
-  for (place, element) in signature_list.iter_mut().zip(signature.into_iter()) {
-    unsafe { std::ptr::write(place, element) };
-}
-    let verified = provider.verify_signature(data, &signature_list).unwrap_or_default();
+    let mut signature_list: [u8; 8] = [0, 0, 0, 0, 0, 0, 0, 0];
+
+    for (place, element) in signature_list.iter_mut().zip(signature.into_iter()) {
+        unsafe { std::ptr::write(place, element) };
+    }
+    let verified = provider
+        .verify_signature(data, &signature_list)
+        .unwrap_or_default();
 
     assert_eq!(true, verified);
 }
@@ -534,17 +536,18 @@ fn verify_signature_2_test() {
 
     let data = b"testingX";
 
-   
     let signature = provider.sign_data(data).unwrap();
 
     //Convert Vec<u8> to list u8
 
-    let mut signature_list: [u8;8] = [0,0,0,0,0,0,0,0];
-  
-  for (place, element) in signature_list.iter_mut().zip(signature.into_iter()) {
-    unsafe { std::ptr::write(place, element) };
-}
-    let verified = provider.verify_signature(data, &signature_list).unwrap_or_default();
+    let mut signature_list: [u8; 8] = [0, 0, 0, 0, 0, 0, 0, 0];
+
+    for (place, element) in signature_list.iter_mut().zip(signature.into_iter()) {
+        unsafe { std::ptr::write(place, element) };
+    }
+    let verified = provider
+        .verify_signature(data, &signature_list)
+        .unwrap_or_default();
 
     assert_eq!(true, verified);
 }
@@ -568,18 +571,69 @@ fn verify_signature_3_test() {
 
     let data = b"H";
 
-
     let signature = provider.sign_data(data).unwrap();
 
     //Convert Vec<u8> to list u8
 
-    let mut signature_list: [u8;8] = [0,0,0,0,0,0,0,0];
-  
-  for (place, element) in signature_list.iter_mut().zip(signature.into_iter()) {
-    unsafe { std::ptr::write(place, element) };
-}
-    let verified = provider.verify_signature(data, &signature_list).unwrap_or_default();
+    let mut signature_list: [u8; 8] = [0, 0, 0, 0, 0, 0, 0, 0];
+
+    for (place, element) in signature_list.iter_mut().zip(signature.into_iter()) {
+        unsafe { std::ptr::write(place, element) };
+    }
+    let verified = provider
+        .verify_signature(data, &signature_list)
+        .unwrap_or_default();
 
     assert_eq!(true, verified);
+}
 
+#[test]
+fn verify_signature_4_test() {
+    let security_module = SecModules::get_instance(
+        "2323".to_string(),
+        SecurityModule::Tpm(TpmType::Android(AndroidTpmType::Keystore)),
+    );
+
+    let x = security_module.unwrap();
+    let mut provider = x.lock().unwrap();
+    let key_algorithm =
+        algorithms::encryption::AsymmetricEncryption::Rsa(algorithms::KeyBits::Bits1024);
+    let hash = algorithms::hashes::Hash::Sha1;
+    let key_usages = vec![KeyUsage::SignEncrypt];
+    provider
+        .initialize_module(key_algorithm, None, Some(hash), key_usages)
+        .unwrap();
+
+    let data = b"";
+
+    let signature = provider.sign_data(data).unwrap();
+
+    let mut signature_list: [u8; 8] = [0, 0, 0, 0, 0, 0, 0, 0];
+
+    for (place, element) in signature_list.iter_mut().zip(signature.into_iter()) {
+        unsafe { std::ptr::write(place, element) };
+    }
+    let verified = provider
+        .verify_signature(data, &signature_list)
+        .unwrap_or_default();
+
+    assert_eq!(false, verified);
+}
+
+#[test]
+fn encrypt_data_1_test() {
+    let security_module = SecModules::get_instance(
+        "2323".to_string(),
+        SecurityModule::Tpm(TpmType::Android(AndroidTpmType::Keystore)),
+    );
+
+    let x = security_module.unwrap();
+    let mut provider = x.lock().unwrap();
+    let key_algorithm =
+        algorithms::encryption::AsymmetricEncryption::Rsa(algorithms::KeyBits::Bits1024);
+    let hash = algorithms::hashes::Hash::Sha1;
+    let key_usages = vec![KeyUsage::SignEncrypt];
+    provider
+        .initialize_module(key_algorithm, None, Some(hash), key_usages)
+        .unwrap();
 }

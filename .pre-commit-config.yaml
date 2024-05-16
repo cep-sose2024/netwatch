@@ -7,8 +7,6 @@ repos:
     repo: https://github.com/commitizen-tools/commitizen
     rev: v2.24.0
   - hooks:
-      - id: fmt
-        args: ['--manifest-path', 'prototype_rust_wrapper/Cargo.toml']
       - id: cargo-check
         args: ['--manifest-path', 'prototype_rust_wrapper/Cargo.toml']
       - id: clippy
