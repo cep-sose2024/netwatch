@@ -2,7 +2,6 @@
 title: "Pre-Commit Hook"
 date: 2024-05-08 00:00:00 +0800
 categories: [Rust]
-tags: [rust]
 ---
 
 # Pre-Commit Hooks
