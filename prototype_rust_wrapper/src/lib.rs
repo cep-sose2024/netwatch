@@ -50,7 +50,7 @@ fn generate_new_key(key: String, algorithm: String) -> Result<(), SecurityModule
 }
 
 #[no_mangle]
-pub unsafe extern "C" fn Java_com_example_greetings_RustGreetings_generateNewKey(
+pub unsafe extern "C" fn Java_com_netwatch_RustNetWatch_generateNewKey(
     mut env: JNIEnv,
     _: JClass,
     key_id: JString,
@@ -101,7 +101,7 @@ fn encrypt(key: String, bytes: &[u8]) -> Result<Vec<u8>, SecurityModuleError> {
 }
 
 #[no_mangle]
-pub unsafe extern "C" fn Java_com_example_greetings_RustGreetings_encrypt(
+pub unsafe extern "C" fn Java_com_netwatch_RustNetwatch_encrypt(
     mut env: JNIEnv,
     _: JClass,
     key_id: JString,
@@ -168,7 +168,7 @@ fn decrypt(key_id: String, bytes: &[u8]) -> Result<Vec<u8>, SecurityModuleError>
 }
 
 #[no_mangle]
-pub unsafe extern "C" fn Java_com_example_greetings_RustGreetings_decrypt(
+pub unsafe extern "C" fn Java_com_netwatch_RustNetWatch_decrypt(
     mut env: JNIEnv,
     _: JClass,
     key_id: JString,
@@ -235,7 +235,7 @@ fn sign(key_id: String, bytes: &[u8]) -> Result<Vec<u8>, SecurityModuleError> {
 }
 
 #[no_mangle]
-pub unsafe extern "C" fn Java_com_example_greetings_RustGreetings_sign(
+pub unsafe extern "C" fn Java_com_netwatch_RustNetWatch_sign(
     mut env: JNIEnv,
     _: JClass,
     key_id: JString,
@@ -305,7 +305,7 @@ fn verify(
 }
 
 #[no_mangle]
-pub unsafe extern "C" fn Java_com_example_greetings_RustGreetings_verify(
+pub unsafe extern "C" fn Java_com_netwatch_RustNetWatch_verify(
     mut env: JNIEnv,
     _: JClass,
     key_id: JString,
