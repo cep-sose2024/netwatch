@@ -1,4 +1,4 @@
-package com.example.netwatch;
+package com.netwatch;
 
 public class RustNetWatch {
     public static native void generateNewKey(String key_id, String algo);

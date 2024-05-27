@@ -10,7 +10,7 @@ use crypto_layer::{
         error::SecurityModuleError,
         factory::{SecModules, SecurityModule}
     },
-    tpm::{android::config::AndroidConfig, core::instance::TpmType},
+    tpm::{android::{android_logger::DefaultAndroidLogger, config::AndroidConfig}, core::instance::TpmType},
 };
 use robusta_jni::jni::{
     objects::{JClass, JString, JObject},
@@ -45,7 +45,7 @@ fn generate_new_key(key: String, algorithm: String, vm: JavaVM) -> Result<(), Se
         SecurityModule::Tpm(TpmType::Android(
             crypto_layer::tpm::core::instance::AndroidTpmType::Keystore,
         )),
-        None,
+        Some(Box::new(DefaultAndroidLogger)),
     )
     .ok_or(SecurityModuleError::InitializationError(
         "couldn't create key provider".to_owned(),
@@ -84,7 +84,7 @@ fn encrypt(key: String, bytes: &[u8], vm: JavaVM) -> Result<Vec<u8>, SecurityMod
         SecurityModule::Tpm(TpmType::Android(
             crypto_layer::tpm::core::instance::AndroidTpmType::Keystore,
         )),
-        None
+        Some(Box::new(DefaultAndroidLogger)),
     )
     .ok_or(SecurityModuleError::InitializationError(
         "couldn't create key provider".to_owned(),
@@ -110,7 +110,7 @@ fn encrypt(key: String, bytes: &[u8], vm: JavaVM) -> Result<Vec<u8>, SecurityMod
 
     let bytes = provider.encrypt_data(bytes)?;
 
-    return Ok(bytes);
+    Ok(bytes)
 }
 
 #[no_mangle]
@@ -156,7 +156,7 @@ fn decrypt(key_id: String, bytes: &[u8], vm: JavaVM) -> Result<Vec<u8>, Security
         SecurityModule::Tpm(TpmType::Android(
             crypto_layer::tpm::core::instance::AndroidTpmType::Keystore,
         )),
-        None
+        Some(Box::new(DefaultAndroidLogger)),
     )
     .ok_or(SecurityModuleError::InitializationError(
         "couldn't create key provider".to_owned(),
@@ -182,7 +182,7 @@ fn decrypt(key_id: String, bytes: &[u8], vm: JavaVM) -> Result<Vec<u8>, Security
     provider.load_key(&key_id, Box::new(config)).unwrap();
 
     let bytes = provider.decrypt_data(bytes)?;
-    return Ok(bytes);
+    Ok(bytes)
 }
 
 #[no_mangle]
@@ -228,7 +228,7 @@ fn sign(key_id: String, bytes: &[u8], vm: JavaVM) -> Result<Vec<u8>, SecurityMod
         SecurityModule::Tpm(TpmType::Android(
             crypto_layer::tpm::core::instance::AndroidTpmType::Keystore,
         )),
-        None
+        Some(Box::new(DefaultAndroidLogger)),
     )
     .ok_or(SecurityModuleError::InitializationError(
         "couldn't create key provider".to_owned(),
@@ -256,7 +256,7 @@ fn sign(key_id: String, bytes: &[u8], vm: JavaVM) -> Result<Vec<u8>, SecurityMod
     provider.load_key(&key_id, Box::new(config)).unwrap();
 
     let bytes = provider.sign_data(bytes)?;
-    return Ok(bytes);
+    Ok(bytes)
 }
 
 #[no_mangle]
@@ -307,7 +307,7 @@ fn verify(
         SecurityModule::Tpm(TpmType::Android(
             crypto_layer::tpm::core::instance::AndroidTpmType::Keystore,
         )),
-        None,
+        Some(Box::new(DefaultAndroidLogger)),
     )
     .ok_or(SecurityModuleError::InitializationError(
         "couldn't create key provider".to_owned(),
@@ -374,7 +374,7 @@ pub unsafe extern "C" fn Java_com_netwatch_RustNetWatch_verify(
 fn handle_error(env: &mut JNIEnv, error: SecurityModuleError) {
     warn!("{}", error);
     // throw java exception
-    if let Err(_) = env.throw_new("java/lang/Exception", error.to_string()) {
+    if env.throw_new("java/lang/Exception", error.to_string()).is_err() {
         error!("Couldn't throw java exception, panicking");
         panic!()
     }

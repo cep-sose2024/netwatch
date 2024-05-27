@@ -1,4 +1,4 @@
-package com.example.netwatch;
+package com.netwatch;
 
 import android.security.keystore.KeyGenParameterSpec;
 import android.security.keystore.KeyProperties;

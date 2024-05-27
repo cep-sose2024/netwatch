@@ -4,11 +4,11 @@ plugins {
 }
 
 android {
-    namespace = "com.example.greetings"
+    namespace = "com.netwatch"
     compileSdk = 34
 
     defaultConfig {
-        applicationId = "com.NetWatch"
+        applicationId = "com.netwatch"
         minSdk = 28
         targetSdk = 34
         versionCode = 1

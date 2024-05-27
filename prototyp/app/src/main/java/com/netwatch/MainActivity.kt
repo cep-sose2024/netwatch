@@ -1,4 +1,4 @@
-package com.example.netwatch
+package com.netwatch
 
 import android.os.Bundle
 import android.util.Log
@@ -23,7 +23,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import com.example.netwatch.ui.theme.GreetingsTheme
+import com.netwatch.ui.theme.Theme
 
 
 class MainActivity : ComponentActivity() {
@@ -37,7 +37,7 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         try {
             setContent {
-                GreetingsTheme {
+                Theme {
                     // A surface container using the 'background' color from the theme
                     Surface(
                         modifier = Modifier.fillMaxSize(),
