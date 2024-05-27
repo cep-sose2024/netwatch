@@ -7,8 +7,8 @@ on:
     branches: [main]
 
 jobs:
-  build:
-    name: cargo build
+  check:
+    name: cargo check
     runs-on: ubuntu-latest
     defaults:
       run:
@@ -16,4 +16,4 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: actions-rust-lang/setup-rust-toolchain@v1
-      - run: cargo build
+      - run: cargo check
