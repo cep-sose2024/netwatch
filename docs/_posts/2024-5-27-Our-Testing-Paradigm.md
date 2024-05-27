@@ -1,4 +1,5 @@
 
+## Introduction
 Testing has always been a very important topic to determine the functionality of the methods and to narrow it down to create a perfect implementation that fits the description and requirements that the company wants.
 
 The company "J&S" had its own test. However, they didn't work in our favor or rather didn't work entirely. So we had to create our own tests to create an understanding/depiction for the reader and programmer of how the code works.
