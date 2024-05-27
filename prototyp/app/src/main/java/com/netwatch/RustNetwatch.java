@@ -1,6 +1,6 @@
 package com.netwatch;
 
-public class RustNetWatch {
+public class RustNetwatch {
     public static native void generateNewKey(String key_id, String algo);
     public static native byte[] encrypt(String key_id, final byte[] bytes);
     public static native byte[] decrypt(String key_id, final byte[] bytes);

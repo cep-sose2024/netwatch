@@ -24,6 +24,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.netwatch.ui.theme.Theme
+import kotlin.concurrent.thread
 
 
 class MainActivity : ComponentActivity() {
@@ -72,7 +73,9 @@ fun EncryptTest() {
     Column {
         Button(onClick = {
             try {
-                CryptoLayerRust.generateRSAKey()
+                thread {
+                    CryptoLayerRust.generateRSAKey()
+                }
             } catch (e: Exception) { alert(e) } })
         {
             Text("Generate Encryption Key")
