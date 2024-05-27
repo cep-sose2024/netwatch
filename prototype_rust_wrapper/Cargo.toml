@@ -10,7 +10,7 @@ crate-type = ["cdylib"]
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-jni = "0.21.1"
+robusta_jni = "*"
 bytemuck = "1.15.0"
-crypto-layer = { path = "../rust_crypto", features = ["tpm", "android"] }
+crypto-layer = { git = "https://github.com/cep-sose2024/rust-crypto-netwatch.git", features = ["tpm", "android"] }
 tracing = "0.1.40"
