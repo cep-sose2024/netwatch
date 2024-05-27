@@ -4,7 +4,7 @@ Testing has always been a very important topic to determine the functionality of
 The company "J&S" had its own test. However, they didn't work in our favor or rather didn't work entirely. So we had to create our own tests to create an understanding/depiction for the reader and programmer of how the code works.
 
 Overall, we use Whitebox testing methods to test.
-![[../assets/img/whiteboxTesting.png]]
+![a relative link](../assets/img/whiteboxTesting.png)
 
 Our concept of testing is quite simple to follow. We test every "testable" function, because we don't have many of them, we can test them with a variety of methods.
 
