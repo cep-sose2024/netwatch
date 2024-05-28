@@ -8,12 +8,12 @@ use crypto_layer::{
             KeyUsage,
         },
         error::SecurityModuleError,
-        factory::{SecModules, SecurityModule}
+        factory::{SecModules, SecurityModule},
     },
     tpm::{android::{android_logger::DefaultAndroidLogger, config::{AndroidConfig, EncryptionMode}}, core::instance::TpmType},
 };
 use robusta_jni::jni::{
-    objects::{JClass, JString, JObject},
+    objects::{JClass, JObject, JString},
     sys::{jboolean, jbyteArray},
     JNIEnv, JavaVM,
 };
@@ -59,17 +59,14 @@ fn generate_new_key(key: String, algorithm: String, vm: JavaVM) -> Result<(), Se
 }
 
 #[no_mangle]
-pub unsafe extern "C" fn Java_com_netwatch_RustNetwatch_generateNewKey(
+pub unsafe extern "C" fn Java_com_example_netwatch_RustNetWatch_generateNewKey(
     mut env: JNIEnv,
     _: JClass,
     key_id: JString,
     algorithm: JString,
 ) {
     let key_id: String = env.get_string(key_id).expect("Couldn't get key ID").into();
-    let algorithm: String = env
-        .get_string(algorithm)
-        .expect("Couldn't get algo")
-        .into();
+    let algorithm: String = env.get_string(algorithm).expect("Couldn't get algo").into();
 
     let vm = env.get_java_vm().unwrap();
 
@@ -111,9 +108,7 @@ fn encrypt(key: String, bytes: &[u8], vm: JavaVM) -> Result<Vec<u8>, SecurityMod
         ],
         vm: Some(vm),
     };
-    provider
-        .initialize_module()
-        .unwrap();
+    provider.initialize_module().unwrap();
     provider.load_key(&key, Box::new(config)).unwrap();
 
     let bytes = provider.encrypt_data(bytes)?;
@@ -122,7 +117,7 @@ fn encrypt(key: String, bytes: &[u8], vm: JavaVM) -> Result<Vec<u8>, SecurityMod
 }
 
 #[no_mangle]
-pub unsafe extern "C" fn Java_com_netwatch_RustNetwatch_encrypt(
+pub unsafe extern "C" fn Java_com_example_netwatch_RustNetwatch_encrypt(
     mut env: JNIEnv,
     _: JClass,
     key_id: JString,
@@ -132,8 +127,7 @@ pub unsafe extern "C" fn Java_com_netwatch_RustNetwatch_encrypt(
 
     let length = env.get_array_length(array_ref).unwrap();
     let mut bytes = vec![0; length as usize];
-    env.get_byte_array_region(array_ref, 0, &mut bytes)
-        .unwrap();
+    env.get_byte_array_region(array_ref, 0, &mut bytes).unwrap();
 
     // the bytes are i8 right now, we need to reinterpret them to u8
     let bytes = bytemuck::cast_slice::<i8, u8>(bytes.as_slice());
@@ -192,9 +186,7 @@ fn decrypt(key_id: String, bytes: &[u8], vm: JavaVM) -> Result<Vec<u8>, Security
         vm: Some(vm),
     };
 
-    provider
-        .initialize_module()
-        .unwrap();
+    provider.initialize_module().unwrap();
     provider.load_key(&key_id, Box::new(config)).unwrap();
 
     let bytes = provider.decrypt_data(bytes)?;
@@ -202,7 +194,7 @@ fn decrypt(key_id: String, bytes: &[u8], vm: JavaVM) -> Result<Vec<u8>, Security
 }
 
 #[no_mangle]
-pub unsafe extern "C" fn Java_com_netwatch_RustNetwatch_decrypt(
+pub unsafe extern "C" fn Java_com_example_netwatch_RustNetWatch_decrypt(
     mut env: JNIEnv,
     _: JClass,
     key_id: JString,
@@ -212,8 +204,7 @@ pub unsafe extern "C" fn Java_com_netwatch_RustNetwatch_decrypt(
 
     let length = env.get_array_length(array_ref).unwrap();
     let mut bytes = vec![0; length as usize];
-    env.get_byte_array_region(array_ref, 0, &mut bytes)
-        .unwrap();
+    env.get_byte_array_region(array_ref, 0, &mut bytes).unwrap();
 
     // the bytes are i8 right now, we need to reinterpret them to u8
     let bytes = bytemuck::cast_slice::<i8, u8>(bytes.as_slice());
@@ -272,10 +263,7 @@ fn sign(key_id: String, bytes: &[u8], vm: JavaVM) -> Result<Vec<u8>, SecurityMod
         vm: Some(vm),
     };
 
-    provider
-        .initialize_module()
-        .unwrap();
-
+    provider.initialize_module().unwrap();
 
     provider.load_key(&key_id, Box::new(config)).unwrap();
 
@@ -284,7 +272,7 @@ fn sign(key_id: String, bytes: &[u8], vm: JavaVM) -> Result<Vec<u8>, SecurityMod
 }
 
 #[no_mangle]
-pub unsafe extern "C" fn Java_com_netwatch_RustNetwatch_sign(
+pub unsafe extern "C" fn Java_com_example_netwatch_RustNetWatch_sign(
     mut env: JNIEnv,
     _: JClass,
     key_id: JString,
@@ -294,8 +282,7 @@ pub unsafe extern "C" fn Java_com_netwatch_RustNetwatch_sign(
 
     let length = env.get_array_length(array_ref).unwrap();
     let mut bytes = vec![0; length as usize];
-    env.get_byte_array_region(array_ref, 0, &mut bytes)
-        .unwrap();
+    env.get_byte_array_region(array_ref, 0, &mut bytes).unwrap();
 
     // the bytes are i8 right now, we need to reinterpret them to u8
     let bytes = bytemuck::cast_slice::<i8, u8>(bytes.as_slice());
@@ -324,7 +311,7 @@ fn verify(
     key_id: String,
     data_bytes: &[u8],
     signature_bytes: &[u8],
-    vm: JavaVM
+    vm: JavaVM,
 ) -> Result<bool, SecurityModuleError> {
     let provider = SecModules::get_instance(
         key_id.clone(),
@@ -359,16 +346,14 @@ fn verify(
         vm: Some(vm),
     };
 
-    provider
-        .initialize_module()
-        .unwrap();
+    provider.initialize_module().unwrap();
     provider.load_key(&key_id, Box::new(config)).unwrap();
 
     provider.verify_signature(data_bytes, signature_bytes)
 }
 
 #[no_mangle]
-pub unsafe extern "C" fn Java_com_netwatch_RustNetwatch_verify(
+pub unsafe extern "C" fn Java_com_example_netwatch_RustNetWatch_verify(
     mut env: JNIEnv,
     _: JClass,
     key_id: JString,
@@ -406,7 +391,10 @@ pub unsafe extern "C" fn Java_com_netwatch_RustNetwatch_verify(
 fn handle_error(env: &mut JNIEnv, error: SecurityModuleError) {
     warn!("{}", error);
     // throw java exception
-    if env.throw_new("java/lang/Exception", error.to_string()).is_err() {
+    if env
+        .throw_new("java/lang/Exception", error.to_string())
+        .is_err()
+    {
         error!("Couldn't throw java exception, panicking");
         panic!()
     }
