@@ -4,13 +4,13 @@ use std::borrow::Borrow;
 use crypto_layer::{
     common::{
         crypto::{
-            algorithms::{self, encryption::AsymmetricEncryption},
+            algorithms::{self, encryption::{AsymmetricEncryption, BlockCiphers, SymmetricMode}, hashes::{Hash, Sha2Bits}, KeyBits},
             KeyUsage,
         },
         error::SecurityModuleError,
         factory::{SecModules, SecurityModule}
     },
-    tpm::{android::{android_logger::DefaultAndroidLogger, config::AndroidConfig}, core::instance::TpmType},
+    tpm::{android::{android_logger::DefaultAndroidLogger, config::{AndroidConfig, EncryptionMode}}, core::instance::TpmType},
 };
 use robusta_jni::jni::{
     objects::{JClass, JString, JObject},
@@ -21,21 +21,21 @@ use tracing::{debug, error, warn};
 
 fn generate_new_key(key: String, algorithm: String, vm: JavaVM) -> Result<(), SecurityModuleError> {
 
-    let algorithm = match algorithm.borrow() {
-        "RSA" => AsymmetricEncryption::Rsa(algorithms::KeyBits::Bits512),
-        "EC" => AsymmetricEncryption::Ecc(algorithms::encryption::EccSchemeAlgorithm::Null),
-        _ => AsymmetricEncryption::Rsa(algorithms::KeyBits::Bits512),
+    let mode = match algorithm.borrow() {
+        "RSA" => EncryptionMode::ASym {algo: AsymmetricEncryption::Rsa(KeyBits::Bits1024), digest: Hash::Sha2(Sha2Bits::Sha256)},
+        "EC" => EncryptionMode::ASym {algo: AsymmetricEncryption::Ecc(algorithms::encryption::EccSchemeAlgorithm::Null), digest: Hash::Sha2(Sha2Bits::Sha256)},
+        "AES" => EncryptionMode::Sym(BlockCiphers::Aes(SymmetricMode::Ecb, KeyBits::Bits256)),
+        _ => panic!(),
     };
 
     let config = AndroidConfig {
-        key_algo: Some(algorithm),
-        sym_algo: None,
-        hash: Some(algorithms::hashes::Hash::Sha2(algorithms::hashes::Sha2Bits::Sha256)),
-        key_usages: Some(vec![
+        mode: mode,
+        hardware_backed: true,
+        key_usages: vec![
             KeyUsage::Decrypt,
             KeyUsage::SignEncrypt,
             KeyUsage::CreateX509,
-        ]),
+        ],
         vm: Some(vm),
     };
 
@@ -92,15 +92,23 @@ fn encrypt(key: String, bytes: &[u8], vm: JavaVM) -> Result<Vec<u8>, SecurityMod
 
     let mut provider = provider.lock().unwrap();
 
+    let algorithm = "RSA";
+
+    let mode = match algorithm.borrow() {
+        "RSA" => EncryptionMode::ASym {algo: AsymmetricEncryption::Rsa(KeyBits::Bits512), digest: Hash::Sha2(Sha2Bits::Sha256)},
+        "EC" => EncryptionMode::ASym {algo: AsymmetricEncryption::Ecc(algorithms::encryption::EccSchemeAlgorithm::Null), digest: Hash::Sha2(Sha2Bits::Sha256)},
+        "AES" => EncryptionMode::Sym(BlockCiphers::Aes(SymmetricMode::Ecb, KeyBits::Bits256)),
+        _ => panic!(),
+    };
+
     let config = AndroidConfig {
-        key_algo: Some(AsymmetricEncryption::Rsa(algorithms::KeyBits::Bits512)),
-        sym_algo: None,
-        hash: None,
-        key_usages: Some(vec![
+        mode: mode,
+        hardware_backed: true,
+        key_usages: vec![
             KeyUsage::Decrypt,
             KeyUsage::SignEncrypt,
             KeyUsage::CreateX509,
-        ]),
+        ],
         vm: Some(vm),
     };
     provider
@@ -164,15 +172,23 @@ fn decrypt(key_id: String, bytes: &[u8], vm: JavaVM) -> Result<Vec<u8>, Security
 
     let mut provider = provider.lock().unwrap();
 
+    let algorithm = "RSA";
+
+    let mode = match algorithm.borrow() {
+        "RSA" => EncryptionMode::ASym {algo: AsymmetricEncryption::Rsa(KeyBits::Bits512), digest: Hash::Sha2(Sha2Bits::Sha256)},
+        "EC" => EncryptionMode::ASym {algo: AsymmetricEncryption::Ecc(algorithms::encryption::EccSchemeAlgorithm::Null), digest: Hash::Sha2(Sha2Bits::Sha256)},
+        "AES" => EncryptionMode::Sym(BlockCiphers::Aes(SymmetricMode::Ecb, KeyBits::Bits256)),
+        _ => panic!(),
+    };
+
     let config = AndroidConfig {
-        key_algo: Some(AsymmetricEncryption::Rsa(algorithms::KeyBits::Bits512)),
-        sym_algo: None,
-        hash: None,
-        key_usages: Some(vec![
+        mode: mode,
+        hardware_backed: true,
+        key_usages: vec![
             KeyUsage::Decrypt,
             KeyUsage::SignEncrypt,
             KeyUsage::CreateX509,
-        ]),
+        ],
         vm: Some(vm),
     };
 
@@ -236,15 +252,23 @@ fn sign(key_id: String, bytes: &[u8], vm: JavaVM) -> Result<Vec<u8>, SecurityMod
 
     let mut provider = provider.lock().unwrap();
 
+    let algorithm = "RSA";
+
+    let mode = match algorithm.borrow() {
+        "RSA" => EncryptionMode::ASym {algo: AsymmetricEncryption::Rsa(KeyBits::Bits512), digest: Hash::Sha2(Sha2Bits::Sha256)},
+        "EC" => EncryptionMode::ASym {algo: AsymmetricEncryption::Ecc(algorithms::encryption::EccSchemeAlgorithm::Null), digest: Hash::Sha2(Sha2Bits::Sha256)},
+        "AES" => EncryptionMode::Sym(BlockCiphers::Aes(SymmetricMode::Ecb, KeyBits::Bits256)),
+        _ => panic!(),
+    };
+
     let config = AndroidConfig {
-        key_algo: Some(AsymmetricEncryption::Rsa(algorithms::KeyBits::Bits512)),
-        sym_algo: None,
-        hash: None,
-        key_usages: Some(vec![
+        mode: mode,
+        hardware_backed: true,
+        key_usages: vec![
             KeyUsage::Decrypt,
             KeyUsage::SignEncrypt,
             KeyUsage::CreateX509,
-        ]),
+        ],
         vm: Some(vm),
     };
 
@@ -315,15 +339,23 @@ fn verify(
 
     let mut provider = provider.lock().unwrap();
 
+    let algorithm = "RSA";
+
+    let mode = match algorithm.borrow() {
+        "RSA" => EncryptionMode::ASym {algo: AsymmetricEncryption::Rsa(KeyBits::Bits512), digest: Hash::Sha2(Sha2Bits::Sha256)},
+        "EC" => EncryptionMode::ASym {algo: AsymmetricEncryption::Ecc(algorithms::encryption::EccSchemeAlgorithm::Null), digest: Hash::Sha2(Sha2Bits::Sha256)},
+        "AES" => EncryptionMode::Sym(BlockCiphers::Aes(SymmetricMode::Ecb, KeyBits::Bits256)),
+        _ => panic!(),
+    };
+
     let config = AndroidConfig {
-        key_algo: Some(AsymmetricEncryption::Rsa(algorithms::KeyBits::Bits512)),
-        sym_algo: None,
-        hash: None,
-        key_usages: Some(vec![
+        mode: mode,
+        hardware_backed: true,
+        key_usages: vec![
             KeyUsage::Decrypt,
             KeyUsage::SignEncrypt,
             KeyUsage::CreateX509,
-        ]),
+        ],
         vm: Some(vm),
     };
 
