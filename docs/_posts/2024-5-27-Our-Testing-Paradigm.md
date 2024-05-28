@@ -1,13 +1,6 @@
 
 ## Introduction
 
-Testing is an important part of software development since it ensures that implemented functionality meet established specifications and client needs. 
-This is especially clear in the instance of the contracted company J&S, whose existing testing suite proved insufficient for the project's requirements. As a result, we were obligated to create our own tests  that would provide a thorough explanation of the code's behavior to both the reader and the programmer.
-
-Overall, we use White-box testing methods to test.
-
-
-
 
 Testing has always been a very important topic to determine the functionality of the methods and to narrow it down to create a perfect implementation that fits the description and requirements that the company wants.
 
@@ -15,6 +8,7 @@ The company "J&S" had its own test. However, the tests didn't work in our favor 
 
 Testing is an important part of software development since it ensures that implemented functionality meet established specifications and client needs. 
 This is especially clear in the instance of the contracted company J&S, whose existing testing suite proved insufficient for the project's requirements. As a result, we were obligated to create our own tests  that would provide a thorough explanation of the code's behavior to both the reader and the programmer.
+
 
 Overall, we use White-box testing methods to test.
 which consists of looking at the code, inspecting it, anitcipating the behaviour and then writing the test cases correspondingly
