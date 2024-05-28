@@ -9,7 +9,7 @@ CI/CD is crucial for us, since we use for various testing or even deployment and
 
 ### Android Emulator
 Using the pipeline we can run an Android Emulator that is used exactly like a normal Android phone, using this feature we can have an idealistic  environment to test our code in. 
-This Android Emulator provides neither the SE(Secure Element) and TEE(Trusted Execution Environment), where as they work perfectly according to our requirements.
+This Android Emulator provides neither the SE(Secure Element) nor TEE(Trusted Execution Environment), but the non-existing of these requirements won't stop the continous testing, since the Android Emulator can access the Keystore API and it's functions.
 ### Cargo Check
 
 We use the Cargo Check command on our specified directory. It helps us to check the local packages and all of their dependencies for errors, which will essentially compile the packages without performing the final step of code generation, which is faster than running cargo build.
