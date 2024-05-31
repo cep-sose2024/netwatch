@@ -59,7 +59,7 @@ fn generate_new_key(key: String, algorithm: String, vm: JavaVM) -> Result<(), Se
 }
 
 #[no_mangle]
-pub unsafe extern "C" fn Java_com_example_netwatch_RustNetWatch_generateNewKey(
+pub unsafe extern "C" fn Java_com_example_netwatch_RustNetwatch_generateNewKey(
     mut env: JNIEnv,
     _: JClass,
     key_id: JString,
@@ -194,7 +194,7 @@ fn decrypt(key_id: String, bytes: &[u8], vm: JavaVM) -> Result<Vec<u8>, Security
 }
 
 #[no_mangle]
-pub unsafe extern "C" fn Java_com_example_netwatch_RustNetWatch_decrypt(
+pub unsafe extern "C" fn Java_com_example_netwatch_RustNetwatch_decrypt(
     mut env: JNIEnv,
     _: JClass,
     key_id: JString,
@@ -272,7 +272,7 @@ fn sign(key_id: String, bytes: &[u8], vm: JavaVM) -> Result<Vec<u8>, SecurityMod
 }
 
 #[no_mangle]
-pub unsafe extern "C" fn Java_com_example_netwatch_RustNetWatch_sign(
+pub unsafe extern "C" fn Java_com_example_netwatch_RustNetwatch_sign(
     mut env: JNIEnv,
     _: JClass,
     key_id: JString,
@@ -353,7 +353,7 @@ fn verify(
 }
 
 #[no_mangle]
-pub unsafe extern "C" fn Java_com_example_netwatch_RustNetWatch_verify(
+pub unsafe extern "C" fn Java_com_example_netwatch_RustNetwatch_verify(
     mut env: JNIEnv,
     _: JClass,
     key_id: JString,
