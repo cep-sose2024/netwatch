@@ -4,43 +4,60 @@
 
 ## Project Goal
 
-The main goal of the Netwatch team is to use the advanced security features of the Android platform, namely the Android Keystore system. The Android Keystore system lets you store cryptographic keys in a container to make them more difficult to extract from the device. The Android Keystore API and the underlying Keymaster HAL provide a basic but adequate set of cryptographic primitives to allow the implementation of protocols using access-controlled, hardware-backed keys. Sensitive operations are delegated to a secure processor reached through some kernel interface. The resulting architecture looks like this:
+The main goal of the Netwatch team is to use the security features of the Android platform, namely the Android Keystore system, to provide a way for the enmeshed Crypto Abstraction Layer to interact with mobile devices. The Android Keystore system lets you store cryptographic keys in a secure container to make them more difficult to extract from the device. Sensitive operations are delegated to a secure processor reached through some kernel interface. The resulting architecture looks like this:
 
 ![alt text](static/access-to-keymaster.png)
 
-The goal of the project is to create a Rust-based wrapper that connects the HSM (Android Keystore) with the Crypto-Abstraction Layer provided by [j&s-soft](https://github.com/nmshd), eliminating the complexity of direct communication and provides an API that is secure, effective and developer-friendly.
+The overall goal of the project is to create a Rust-based wrapper that connects the HSM (Android Keystore) with the Crypto-Abstraction Layer provided by [j&s-soft](https://github.com/nmshd).
+
+Note: This repository only houses the prototype designed to demonstrate the functionality of the android CAL implementation. To view the actual implementation, go to the [official CAL fork repository page](https://github.com/cep-sose2024/rust-crypto-netwatch).
 
 ## Features
 
-- **HSM Wrapper**: A layer that abstracts the complexities of directly interacting with the HSM.
-- **Crypto Abstraction Integration**: Integration with j&s-soft's Crypto Abstraction Layer.
-- **Dedicated API**: A dedicated API for communicating with the SE/TEE.
+- **Encryption & Decryption**
+- **Verification & Signing**
+- **Device attestation**
 
 ## Getting Started
 
 ### Prerequisites
 
 - Rust Programming Language: Install the latest version of Rust on your system. You can install Rust through [rustup](https://rustup.rs/).
+- Android Studio with the **NDK** and **CMAKE** SDK tools enabled.
 
-### Installation
+### Running the Prototype
 
 1. Clone the repository:
 
 ```bash
-git clone https://github.com/yourusername/netwatch.git
+git clone https://github.com/cep-sose2024/netwatch.git
 ```
 
-2. Navigate to the project directory:
+2. Install `cargo-ndk`
 
 ```bash
-cd netwatch
+cargo install cargo-ndk
 ```
 
-3. Build the project:
+3. Add android toolchain:
 
 ```bash
-cargo build
+rustup target add armv7-linux-androideabi
 ```
+
+4. Navigate to the prototype wrapper directory:
+
+```bash
+cd netwatch/prototype_rust_wrapper
+```
+
+5. Build the library:
+
+```bash
+cargo ndk -t arm64-v8a -o ../prototype_new/app/src/main/jniLibs build
+```
+
+6. Run the prototype Java application using Android Studio.
 
 ## Contributing
 
