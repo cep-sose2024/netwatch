@@ -38,6 +38,14 @@ public class CryptoLayerRust {
         return verified;
     }
 
+    public static byte[] encryptFile(byte[] file) {
+        return RustNetwatch.encrypt(rsa_key, file);
+    }
+
+    public static byte[] decryptFile(byte[] file) {
+        return RustNetwatch.decrypt(rsa_key, file);
+    }
+
     public static String encryptText(String text) throws Exception {
         byte[] encrypted = RustNetwatch.encrypt(rsa_key, text.getBytes());
 

@@ -30,7 +30,7 @@ fn generate_new_key(key: String, algorithm: String, vm: JavaVM) -> Result<(), Se
 
     let config = AndroidConfig {
         mode: mode,
-        hardware_backed: true,
+        hardware_backed: false,
         key_usages: vec![
             KeyUsage::Decrypt,
             KeyUsage::SignEncrypt,
@@ -91,7 +91,7 @@ fn encrypt(key: String, bytes: &[u8], vm: JavaVM) -> Result<Vec<u8>, SecurityMod
 
     let algorithm = "RSA";
 
-    let mode = match algorithm.borrow() {
+    let mode = match algorithm {
         "RSA" => EncryptionMode::ASym {algo: AsymmetricEncryption::Rsa(KeyBits::Bits512), digest: Hash::Sha2(Sha2Bits::Sha256)},
         "EC" => EncryptionMode::ASym {algo: AsymmetricEncryption::Ecc(algorithms::encryption::EccSchemeAlgorithm::Null), digest: Hash::Sha2(Sha2Bits::Sha256)},
         "AES" => EncryptionMode::Sym(BlockCiphers::Aes(SymmetricMode::Ecb, KeyBits::Bits256)),
@@ -100,7 +100,7 @@ fn encrypt(key: String, bytes: &[u8], vm: JavaVM) -> Result<Vec<u8>, SecurityMod
 
     let config = AndroidConfig {
         mode: mode,
-        hardware_backed: true,
+        hardware_backed: false,
         key_usages: vec![
             KeyUsage::Decrypt,
             KeyUsage::SignEncrypt,
@@ -168,7 +168,7 @@ fn decrypt(key_id: String, bytes: &[u8], vm: JavaVM) -> Result<Vec<u8>, Security
 
     let algorithm = "RSA";
 
-    let mode = match algorithm.borrow() {
+    let mode = match algorithm {
         "RSA" => EncryptionMode::ASym {algo: AsymmetricEncryption::Rsa(KeyBits::Bits512), digest: Hash::Sha2(Sha2Bits::Sha256)},
         "EC" => EncryptionMode::ASym {algo: AsymmetricEncryption::Ecc(algorithms::encryption::EccSchemeAlgorithm::Null), digest: Hash::Sha2(Sha2Bits::Sha256)},
         "AES" => EncryptionMode::Sym(BlockCiphers::Aes(SymmetricMode::Ecb, KeyBits::Bits256)),
@@ -245,7 +245,7 @@ fn sign(key_id: String, bytes: &[u8], vm: JavaVM) -> Result<Vec<u8>, SecurityMod
 
     let algorithm = "RSA";
 
-    let mode = match algorithm.borrow() {
+    let mode = match algorithm {
         "RSA" => EncryptionMode::ASym {algo: AsymmetricEncryption::Rsa(KeyBits::Bits512), digest: Hash::Sha2(Sha2Bits::Sha256)},
         "EC" => EncryptionMode::ASym {algo: AsymmetricEncryption::Ecc(algorithms::encryption::EccSchemeAlgorithm::Null), digest: Hash::Sha2(Sha2Bits::Sha256)},
         "AES" => EncryptionMode::Sym(BlockCiphers::Aes(SymmetricMode::Ecb, KeyBits::Bits256)),
@@ -328,7 +328,7 @@ fn verify(
 
     let algorithm = "RSA";
 
-    let mode = match algorithm.borrow() {
+    let mode = match algorithm {
         "RSA" => EncryptionMode::ASym {algo: AsymmetricEncryption::Rsa(KeyBits::Bits512), digest: Hash::Sha2(Sha2Bits::Sha256)},
         "EC" => EncryptionMode::ASym {algo: AsymmetricEncryption::Ecc(algorithms::encryption::EccSchemeAlgorithm::Null), digest: Hash::Sha2(Sha2Bits::Sha256)},
         "AES" => EncryptionMode::Sym(BlockCiphers::Aes(SymmetricMode::Ecb, KeyBits::Bits256)),
