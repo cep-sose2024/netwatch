@@ -5,13 +5,13 @@ order: 4
 ---
 
 
-NetWatch is a passionate team of students from the Mannheim University of Applied Sciences, working in close collaboration with j&s-soft GmbH, based in Heidelberg, Germany. As part of our Project Semester (CEP), we are dedicated to making significant strides in the realm of cybersecurity. Our work contributes to the Enmeshed platform, which aims to provide open-source solutions for secure and efficient digital communication and collaboration.
+NetWatch is a passionate team of students from the Mannheim University of Applied Sciences, working in close collaboration with j&s-soft GmbH, based in Heidelberg, Germany. As part of our Project Semester (CEP), we are dedicated to making significant improvements on the Google Pixel Authenticatation-methods. Our work contributes to the Enmeshed platform, which aims to provide open-source solutions for secure and efficient digital communication and connection.
 
 ![Poster](assets/img/logo/netwatch-poster.jpg)
 
-### Our Mission
+### Our Project
 
-Our mission is to develop cutting-edge solutions that enhance data security and privacy. We focus on creating secure interfaces for key management on Android devices using Rust, aiming to protect sensitive user data against unauthorized access and elevate the standards of digital security.
+Our Project is to develop a working-solution that enhances data security and privacy. We focus on creating secure interfaces for key management on Google Pixel devices using Rust, aiming to protect sensitive user data against unauthorized access and elevate the standards of digital security.
 
 ### Meet the Team
 
