@@ -94,47 +94,36 @@ class MainActivity : ComponentActivity() {
 
     private suspend fun encryptImage(inputUri: Uri, outputUri: Uri) = withContext(Dispatchers.IO) {
         val startTime = System.currentTimeMillis()
-        var imageSize: Int? = null
 
         contentResolver.openInputStream(inputUri)?.use { inputStream ->
             val byteArray = inputStream.readBytes()
-            imageSize = byteArray.size
+            val imageSize = byteArray.size
+
+            val encryptedByteArray = CryptoLayerRust.encryptFile(byteArray)
 
             contentResolver.openOutputStream(outputUri)?.use { outputStream ->
-                // 117 bytes is the maximum buffer size, it crashes on 118+
-                val buffer = ByteArray(64)
-                var bytesRead: Int
-                var totalBytesRead = 0
-                byteArray.inputStream().use { byteArrayInputStream ->
-                    while (byteArrayInputStream.read(buffer).also { bytesRead = it } != -1) {
-                        val encryptedChunk = CryptoLayerRust.encryptFile(buffer)
-                        outputStream.write(encryptedChunk, 0, bytesRead)
-                        totalBytesRead += bytesRead
-                        progress = totalBytesRead.toFloat() / imageSize!!
-                    }
-                }
+                outputStream.write(encryptedByteArray)
             }
-        }
 
-        val endTime = System.currentTimeMillis()
-        val duration = endTime - startTime
+            val endTime = System.currentTimeMillis()
+            val duration = endTime - startTime
 
-        imageSize?.let {
-            Log.d("ImageEncryption", "Input image size: $it bytes")
-            val sizeInMB = it / (1024.0 * 1024.0)
+            Log.d("ImageEncryption", "Input image size: $imageSize bytes")
+            val sizeInMB = imageSize / (1024.0 * 1024.0)
             val durationInSeconds = duration / 1000.0
             val speed = sizeInMB / durationInSeconds
             Log.d("ImageEncryption", "Encryption speed: $speed MB/s")
+            Log.i("ImageEncryption", "Image encrypted successfully in $duration ms")
+
+            withContext(Dispatchers.Main) {
+                Toast.makeText(
+                    this@MainActivity,
+                    "Image encrypted successfully in $duration ms",
+                    Toast.LENGTH_SHORT
+                ).show()
+            }
+            Log.d("ImageEncryption", "Output file: $outputUri")
         }
-        Log.i("ImageEncryption", "Image encrypted successfully in $duration ms")
-        withContext(Dispatchers.Main) {
-            Toast.makeText(
-                this@MainActivity,
-                "Image encrypted successfully in $duration ms",
-                Toast.LENGTH_SHORT
-            ).show()
-        }
-        Log.d("ImageEncryption", "Output file: $outputUri")
     }
 
     // Sony Xperia 1 IV in MB/s
@@ -291,7 +280,7 @@ fun EncryptTest(
         Button(onClick = {
             try {
                 thread {
-                    CryptoLayerRust.generateRSAKey()
+                    CryptoLayerRust.generateAESKey()
                 }
             } catch (e: Exception) {
                 alert(e)

@@ -76,7 +76,7 @@ public class EncryptionAndDecryption {
     public void encryption_and_decryption_random_AES_6()
     {
         RustNetwatch.generateNewKey("2324","AES");
-        byte[] expectedResult = generateRandomBytes(10000000);
+        byte[] expectedResult = generateRandomBytes(10_000_000);
         byte[] encryptedValue = RustNetwatch.encrypt("2324",expectedResult,"AES");
         byte[] result = RustNetwatch.decrypt("2324",encryptedValue,"AES");
         Assert.assertArrayEquals( expectedResult, result);
