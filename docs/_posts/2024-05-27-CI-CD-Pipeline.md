@@ -13,15 +13,16 @@ This Android Emulator provides neither the SE(Secure Element) nor TEE(Trusted Ex
 ### Cargo Check
 
 We use the Cargo Check command on our specified directory. It helps us to check the local packages and all of their dependencies for errors, which will essentially compile the packages without performing the final step of code generation, which is faster than running cargo build.
+[1](https://doc.rust-lang.org/cargo/commands/cargo-check.html)
 
 ### Rustfmt
 
 Rustfmt is a formatting tool that enforces the standard Rust-community code style. This ensures us that the code is well formatted and readable.
-
+[2](https://github.com/rust-lang/rustfmt)
 ### Jekyll pages
 
 Use use a workflow for building and deploying a Jekyll site to GitHub Pages, it does build this website on commit, of course, only if the commit has something to do with the documentation or /doc directory
-
+[3](https://jekyllrb.com/docs/pages/)
 
 ## What is meant by continuous testing? [](https://about.gitlab.com/topics/ci-cd/#what-is-meant-by-continuous-testing)
 
