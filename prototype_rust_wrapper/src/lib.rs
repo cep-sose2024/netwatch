@@ -4,13 +4,24 @@ use std::borrow::Borrow;
 use crypto_layer::{
     common::{
         crypto::{
-            algorithms::{self, encryption::{AsymmetricEncryption, BlockCiphers, SymmetricMode}, hashes::{Hash, Sha2Bits}, KeyBits},
+            algorithms::{
+                self,
+                encryption::{AsymmetricEncryption, BlockCiphers, SymmetricMode},
+                hashes::{Hash, Sha2Bits},
+                KeyBits,
+            },
             KeyUsage,
         },
         error::SecurityModuleError,
         factory::{SecModules, SecurityModule},
     },
-    tpm::{android::{android_logger::DefaultAndroidLogger, config::{AndroidConfig, EncryptionMode}}, core::instance::TpmType},
+    tpm::{
+        android::{
+            android_logger::DefaultAndroidLogger,
+            config::{AndroidConfig, EncryptionMode},
+        },
+        core::instance::TpmType,
+    },
 };
 use robusta_jni::jni::{
     objects::{JClass, JObject, JString},
@@ -20,11 +31,17 @@ use robusta_jni::jni::{
 use tracing::{debug, error, warn};
 
 fn generate_new_key(key: String, algorithm: String, vm: JavaVM) -> Result<(), SecurityModuleError> {
-
     let mode = match algorithm.borrow() {
-        "RSA" => EncryptionMode::ASym {algo: AsymmetricEncryption::Rsa(KeyBits::Bits1024), digest: Hash::Sha2(Sha2Bits::Sha256)},
-        "EC" => EncryptionMode::ASym {algo: AsymmetricEncryption::Ecc(algorithms::encryption::EccSchemeAlgorithm::Null), digest: Hash::Sha2(Sha2Bits::Sha256)},
-        "AES" => EncryptionMode::Sym(BlockCiphers::Aes(SymmetricMode::Ecb, KeyBits::Bits256)),
+        "RSA" => EncryptionMode::ASym {
+            algo: AsymmetricEncryption::Rsa(KeyBits::Bits512),
+            digest: Hash::Sha2(Sha2Bits::Sha256),
+        },
+        "EC" => EncryptionMode::ASym {
+            algo: AsymmetricEncryption::Ecc(algorithms::encryption::EccSchemeAlgorithm::Null),
+            digest: Hash::Sha2(Sha2Bits::Sha256),
+        },
+        "AES" => EncryptionMode::Sym(BlockCiphers::Aes(SymmetricMode::Cbc, KeyBits::Bits256)),
+
         _ => panic!(),
     };
 
@@ -75,7 +92,12 @@ pub unsafe extern "C" fn Java_com_example_netwatch_RustNetwatch_generateNewKey(
     }
 }
 
-fn encrypt(key: String, bytes: &[u8], vm: JavaVM) -> Result<Vec<u8>, SecurityModuleError> {
+fn encrypt(
+    key: String,
+    bytes: &[u8],
+    vm: JavaVM,
+    algorithm: String,
+) -> Result<Vec<u8>, SecurityModuleError> {
     let provider = SecModules::get_instance(
         key.clone(),
         SecurityModule::Tpm(TpmType::Android(
@@ -89,12 +111,17 @@ fn encrypt(key: String, bytes: &[u8], vm: JavaVM) -> Result<Vec<u8>, SecurityMod
 
     let mut provider = provider.lock().unwrap();
 
-    let algorithm = "RSA";
+    let mode = match algorithm.borrow() {
+        "RSA" => EncryptionMode::ASym {
+            algo: AsymmetricEncryption::Rsa(KeyBits::Bits512),
+            digest: Hash::Sha2(Sha2Bits::Sha256),
+        },
+        "EC" => EncryptionMode::ASym {
+            algo: AsymmetricEncryption::Ecc(algorithms::encryption::EccSchemeAlgorithm::Null),
+            digest: Hash::Sha2(Sha2Bits::Sha256),
+        },
+        "AES" => EncryptionMode::Sym(BlockCiphers::Aes(SymmetricMode::Cbc, KeyBits::Bits256)),
 
-    let mode = match algorithm {
-        "RSA" => EncryptionMode::ASym {algo: AsymmetricEncryption::Rsa(KeyBits::Bits512), digest: Hash::Sha2(Sha2Bits::Sha256)},
-        "EC" => EncryptionMode::ASym {algo: AsymmetricEncryption::Ecc(algorithms::encryption::EccSchemeAlgorithm::Null), digest: Hash::Sha2(Sha2Bits::Sha256)},
-        "AES" => EncryptionMode::Sym(BlockCiphers::Aes(SymmetricMode::Ecb, KeyBits::Bits256)),
         _ => panic!(),
     };
 
@@ -122,9 +149,10 @@ pub unsafe extern "C" fn Java_com_example_netwatch_RustNetwatch_encrypt(
     _: JClass,
     key_id: JString,
     array_ref: jbyteArray,
+    algorithm: JString,
 ) -> jbyteArray {
     let key_id: String = env.get_string(key_id).expect("Couldn't get key ID").into();
-
+    let algorithm: String = env.get_string(algorithm).expect("Couldn't get algo").into();
     let length = env.get_array_length(array_ref).unwrap();
     let mut bytes = vec![0; length as usize];
     env.get_byte_array_region(array_ref, 0, &mut bytes).unwrap();
@@ -134,7 +162,7 @@ pub unsafe extern "C" fn Java_com_example_netwatch_RustNetwatch_encrypt(
 
     let vm = env.get_java_vm().unwrap();
 
-    match encrypt(key_id, bytes, vm) {
+    match encrypt(key_id, bytes, vm, algorithm) {
         Ok(bytes) => {
             // now we need to turn them back into i8
             let bytes = bytemuck::cast_slice::<u8, i8>(bytes.as_slice());
@@ -152,7 +180,12 @@ pub unsafe extern "C" fn Java_com_example_netwatch_RustNetwatch_encrypt(
     }
 }
 
-fn decrypt(key_id: String, bytes: &[u8], vm: JavaVM) -> Result<Vec<u8>, SecurityModuleError> {
+fn decrypt(
+    key_id: String,
+    bytes: &[u8],
+    vm: JavaVM,
+    algorithm: String,
+) -> Result<Vec<u8>, SecurityModuleError> {
     let provider = SecModules::get_instance(
         key_id.clone(),
         SecurityModule::Tpm(TpmType::Android(
@@ -166,12 +199,17 @@ fn decrypt(key_id: String, bytes: &[u8], vm: JavaVM) -> Result<Vec<u8>, Security
 
     let mut provider = provider.lock().unwrap();
 
-    let algorithm = "RSA";
+    let mode = match algorithm.borrow() {
+        "RSA" => EncryptionMode::ASym {
+            algo: AsymmetricEncryption::Rsa(KeyBits::Bits512),
+            digest: Hash::Sha2(Sha2Bits::Sha256),
+        },
+        "EC" => EncryptionMode::ASym {
+            algo: AsymmetricEncryption::Ecc(algorithms::encryption::EccSchemeAlgorithm::Null),
+            digest: Hash::Sha2(Sha2Bits::Sha256),
+        },
+        "AES" => EncryptionMode::Sym(BlockCiphers::Aes(SymmetricMode::Cbc, KeyBits::Bits256)),
 
-    let mode = match algorithm {
-        "RSA" => EncryptionMode::ASym {algo: AsymmetricEncryption::Rsa(KeyBits::Bits512), digest: Hash::Sha2(Sha2Bits::Sha256)},
-        "EC" => EncryptionMode::ASym {algo: AsymmetricEncryption::Ecc(algorithms::encryption::EccSchemeAlgorithm::Null), digest: Hash::Sha2(Sha2Bits::Sha256)},
-        "AES" => EncryptionMode::Sym(BlockCiphers::Aes(SymmetricMode::Ecb, KeyBits::Bits256)),
         _ => panic!(),
     };
 
@@ -199,8 +237,10 @@ pub unsafe extern "C" fn Java_com_example_netwatch_RustNetwatch_decrypt(
     _: JClass,
     key_id: JString,
     array_ref: jbyteArray,
+    algorithm: JString,
 ) -> jbyteArray {
     let key_id: String = env.get_string(key_id).expect("Couldn't get key ID").into();
+    let algorithm: String = env.get_string(algorithm).expect("Couldn't get algo").into();
 
     let length = env.get_array_length(array_ref).unwrap();
     let mut bytes = vec![0; length as usize];
@@ -211,7 +251,7 @@ pub unsafe extern "C" fn Java_com_example_netwatch_RustNetwatch_decrypt(
 
     let vm = env.get_java_vm().unwrap();
 
-    match decrypt(key_id, bytes, vm) {
+    match decrypt(key_id, bytes, vm, algorithm) {
         Ok(bytes) => {
             // now we need to turn them back into i8
             let bytes = bytemuck::cast_slice::<u8, i8>(bytes.as_slice());
@@ -229,7 +269,12 @@ pub unsafe extern "C" fn Java_com_example_netwatch_RustNetwatch_decrypt(
     }
 }
 
-fn sign(key_id: String, bytes: &[u8], vm: JavaVM) -> Result<Vec<u8>, SecurityModuleError> {
+fn sign(
+    key_id: String,
+    bytes: &[u8],
+    vm: JavaVM,
+    algorithm: String,
+) -> Result<Vec<u8>, SecurityModuleError> {
     let provider = SecModules::get_instance(
         key_id.clone(),
         SecurityModule::Tpm(TpmType::Android(
@@ -243,12 +288,16 @@ fn sign(key_id: String, bytes: &[u8], vm: JavaVM) -> Result<Vec<u8>, SecurityMod
 
     let mut provider = provider.lock().unwrap();
 
-    let algorithm = "RSA";
-
-    let mode = match algorithm {
-        "RSA" => EncryptionMode::ASym {algo: AsymmetricEncryption::Rsa(KeyBits::Bits512), digest: Hash::Sha2(Sha2Bits::Sha256)},
-        "EC" => EncryptionMode::ASym {algo: AsymmetricEncryption::Ecc(algorithms::encryption::EccSchemeAlgorithm::Null), digest: Hash::Sha2(Sha2Bits::Sha256)},
-        "AES" => EncryptionMode::Sym(BlockCiphers::Aes(SymmetricMode::Ecb, KeyBits::Bits256)),
+    let mode = match algorithm.borrow() {
+        "RSA" => EncryptionMode::ASym {
+            algo: AsymmetricEncryption::Rsa(KeyBits::Bits512),
+            digest: Hash::Sha2(Sha2Bits::Sha256),
+        },
+        "EC" => EncryptionMode::ASym {
+            algo: AsymmetricEncryption::Ecc(algorithms::encryption::EccSchemeAlgorithm::Null),
+            digest: Hash::Sha2(Sha2Bits::Sha256),
+        },
+        "AES" => EncryptionMode::Sym(BlockCiphers::Aes(SymmetricMode::Cbc, KeyBits::Bits256)),
         _ => panic!(),
     };
 
@@ -277,8 +326,10 @@ pub unsafe extern "C" fn Java_com_example_netwatch_RustNetwatch_sign(
     _: JClass,
     key_id: JString,
     array_ref: jbyteArray,
+    algorithm: JString,
 ) -> jbyteArray {
     let key_id: String = env.get_string(key_id).expect("Couldn't get key ID").into();
+    let algorithm: String = env.get_string(algorithm).expect("Couldn't get algo").into();
 
     let length = env.get_array_length(array_ref).unwrap();
     let mut bytes = vec![0; length as usize];
@@ -289,7 +340,7 @@ pub unsafe extern "C" fn Java_com_example_netwatch_RustNetwatch_sign(
 
     let vm = env.get_java_vm().unwrap();
 
-    match sign(key_id, bytes, vm) {
+    match sign(key_id, bytes, vm, algorithm) {
         Ok(bytes) => {
             // now we need to turn them back into i8
             let bytes = bytemuck::cast_slice::<u8, i8>(bytes.as_slice());
@@ -312,6 +363,7 @@ fn verify(
     data_bytes: &[u8],
     signature_bytes: &[u8],
     vm: JavaVM,
+    algorithm: String,
 ) -> Result<bool, SecurityModuleError> {
     let provider = SecModules::get_instance(
         key_id.clone(),
@@ -326,12 +378,16 @@ fn verify(
 
     let mut provider = provider.lock().unwrap();
 
-    let algorithm = "RSA";
-
-    let mode = match algorithm {
-        "RSA" => EncryptionMode::ASym {algo: AsymmetricEncryption::Rsa(KeyBits::Bits512), digest: Hash::Sha2(Sha2Bits::Sha256)},
-        "EC" => EncryptionMode::ASym {algo: AsymmetricEncryption::Ecc(algorithms::encryption::EccSchemeAlgorithm::Null), digest: Hash::Sha2(Sha2Bits::Sha256)},
-        "AES" => EncryptionMode::Sym(BlockCiphers::Aes(SymmetricMode::Ecb, KeyBits::Bits256)),
+    let mode = match algorithm.borrow() {
+        "RSA" => EncryptionMode::ASym {
+            algo: AsymmetricEncryption::Rsa(KeyBits::Bits512),
+            digest: Hash::Sha2(Sha2Bits::Sha256),
+        },
+        "EC" => EncryptionMode::ASym {
+            algo: AsymmetricEncryption::Ecc(algorithms::encryption::EccSchemeAlgorithm::Null),
+            digest: Hash::Sha2(Sha2Bits::Sha256),
+        },
+        "AES" => EncryptionMode::Sym(BlockCiphers::Aes(SymmetricMode::Cbc, KeyBits::Bits256)),
         _ => panic!(),
     };
 
@@ -359,8 +415,10 @@ pub unsafe extern "C" fn Java_com_example_netwatch_RustNetwatch_verify(
     key_id: JString,
     data_ref: jbyteArray,
     signature_ref: jbyteArray,
+    algorithm: JString,
 ) -> jboolean {
     let key_id: String = env.get_string(key_id).expect("Couldn't get key ID").into();
+    let algorithm: String = env.get_string(algorithm).expect("Couldn't get algo").into();
 
     let data_length = env.get_array_length(data_ref).unwrap();
     let mut data_bytes = vec![0; data_length as usize];
@@ -378,7 +436,7 @@ pub unsafe extern "C" fn Java_com_example_netwatch_RustNetwatch_verify(
 
     let vm = env.get_java_vm().unwrap();
 
-    match verify(key_id, data_bytes, signature_bytes, vm) {
+    match verify(key_id, data_bytes, signature_bytes, vm, algorithm) {
         Ok(true) => 1,
         Ok(false) => 0,
         Err(e) => {
