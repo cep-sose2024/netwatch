@@ -2,7 +2,6 @@
 title: "Crypto Layer on Architecture"
 date: 2024-04-30 00:00:00 +0800
 categories: [Architecture]
-tags: [crypto layer, hsm]
 mermaid: true
 ---
 

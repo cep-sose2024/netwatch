@@ -1,3 +1,8 @@
+---
+title: "Next Steps"
+date: 2024-04-28 00:00:00 +0800
+categories: [Future Actions]
+---
 
 We have come so far with this project and done so much as we intended to do. We worked as a wonderful team on this piece and combined our abilities and strengths to create this prototype that we have. With that being said, we have a lot to do and want to explore our capabilities in depth. 
 

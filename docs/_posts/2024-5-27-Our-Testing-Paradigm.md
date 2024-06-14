@@ -1,3 +1,8 @@
+---
+title: "Testing"
+date: 2024-06-14 00:00:00 +0800
+categories: [Test]
+---
 
 ## Introduction
 
@@ -12,7 +17,7 @@ This is especially clear in the instance of the contracted company J&S, whose ex
 
 Overall, we use White-box testing methods to test.
 which consists of looking at the code, inspecting it, anitcipating the behaviour and then writing the test cases correspondingly
-![a relative link](/docs/assets/img/whiteboxTesting.png)
+![Poster](assets/img/logo/whiteboxTesting.png)
 
 Our code's reasonable size enables us to adopt an extensive testing strategy. We attempt to test all functions that lend themselves to testing, using a variety of approaches to provide a high level of test coverage.
 

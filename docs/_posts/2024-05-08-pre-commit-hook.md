@@ -1,7 +1,7 @@
 ---
-title: "Pre-Commit Hook"
+title: "Tools"
 date: 2024-05-08 00:00:00 +0800
-categories: [Rust]
+categories: [Code Quality]
 ---
 
 # Pre-Commit Hooks

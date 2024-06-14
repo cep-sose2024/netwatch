@@ -1,7 +1,7 @@
 ---
-title: "Used Rust Crates"
-date: 2024-04-28 00:00:00 +0800
-categories: [Rust]
+title: "Libraries"
+date: 2024-05-08 00:00:00 +0800
+categories: [Code Quality]
 ---
 
 # Used Rust Crates

@@ -13,10 +13,6 @@ pin: true
 
 **NetWatch** is part of the Cyber Security Development Project (CEP) at the Mannheim University of Applied Science. The main goal is to develop an interface wrapper that ensures secure interaction with the Android Keystore system. The wrapper is specifically optimized for use on Google Pixel devices and integrates Hardware Security Modules (HSM) to maximize data security. This is achieved through improved and trustworthy storage and transmission of sensitive data, specifically tailored to the security architecture of mobile devices.
 
-## Who is behind NetWatch?
-
-NetWatch is a team of students from the [Mannheim University of Applied Sciences](https://www.english.hs-mannheim.de/the-university.html) in collaboration with [j&s-soft GmbH]([Start - j&s-soft (js-soft.com)](https://www.js-soft.com/)) based in Heidelberg, Germany. This project is part of the  [**Enmeshed**](https://enmeshed.de/en/) platform, which aims to provide open-source solutions for secure and efficient digital communication and collaboration.
-
 ## Prototype
 
 The **NetWatch** prototype demonstrates how the wrapper accesses the Android Keystore System through an Abstraction Layer. This layer offers a more user-friendly interface for key management and security operations. The Abstraction Layer also allows various security features, which is especially important for effective application on various newer Android devices like the Google Pixel. 
