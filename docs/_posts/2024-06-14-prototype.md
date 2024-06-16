@@ -21,10 +21,10 @@ The prototype is a Java application designed to test and demonstrate the functio
 # Prototype UI
 
 Image Encryption Tab:
-![image1](/docs/assets/img/prototype_tab1.jpg)
+![tab1](assets/img/prototype_tab1.jpg)
 
 Text Encryption Tab:
-![image2](/docs/assets/img/prototype_tab2.jpg)
+![tab2](assets/img/prototype_tab2.jpg)
 
 # Key Generation Process
 
