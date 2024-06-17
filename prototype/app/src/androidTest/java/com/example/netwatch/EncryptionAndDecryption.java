@@ -37,6 +37,22 @@ public class EncryptionAndDecryption {
         });
     }
 
+    @Test(expected = Exception.class)
+    public void encryption_from_capabilities_empty_keyname() {
+        String[] caps = RustNetwatch.getCapabilities();
+        String empty_keyname = "";
+        Arrays.stream(caps).filter((name) -> {
+            return name.startsWith("ENC");
+        }).forEach((mode) -> {
+            String keyName = "AndroidTest-" + mode;
+            RustNetwatch.generateNewKey(keyName, mode);
+            byte[] expectedResult = generateRandomBytes(20);
+            byte[] encryptedValue = RustNetwatch.encrypt(empty_keyname, expectedResult, mode);
+            byte[] result = RustNetwatch.decrypt(empty_keyname, encryptedValue, mode);
+            Assert.assertArrayEquals(expectedResult, result);
+        });
+    }
+
     @Test
     public void signing_from_capabilities() {
         String[] caps = RustNetwatch.getCapabilities();
@@ -51,6 +67,25 @@ public class EncryptionAndDecryption {
                     byte[] expectedResult = generateRandomBytes(10);
                     byte[] result = RustNetwatch.sign(keyName, expectedResult, mode);
                     boolean x = RustNetwatch.verify(keyName, expectedResult, result, mode);
+                    Assert.assertTrue(x);
+                });
+    }
+
+    @Test(expected = Exception.class)
+    public void signing_from_capabilities_empty_keyname() {
+        String[] caps = RustNetwatch.getCapabilities();
+        String empty_keyname = "";
+
+        Arrays.stream(caps)
+                .filter((name) -> {
+                    return name.startsWith("SIG");
+                })
+                .forEach((mode) -> {
+                    String keyName = "AndroidTest-" + mode;
+                    RustNetwatch.generateNewKey(keyName, mode);
+                    byte[] expectedResult = generateRandomBytes(10);
+                    byte[] result = RustNetwatch.sign(empty_keyname, expectedResult, mode);
+                    boolean x = RustNetwatch.verify(empty_keyname, expectedResult, result, mode);
                     Assert.assertTrue(x);
                 });
     }
