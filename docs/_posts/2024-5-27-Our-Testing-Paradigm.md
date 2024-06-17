@@ -32,7 +32,6 @@ Software Testing: Once the hardware has been verified, we can proceed to test th
 **Our testing strategy utilizes two approaches:**
 
 1. **Unit Testing:** This method utilizes Rust unit tests to verify the functionality of individual software components in isolation. These tests are executed directly on our Android devices for a realistic testing environment.
-2. **Continuous Integration (CI) Testing:** This approach leverages the Android Emulator within a GitHub Action to automate frequent test execution. This allows for rapid identification of code changes that introduce regressions, pinpointing the specific commit or modification responsible for test failures.
 
 
 
