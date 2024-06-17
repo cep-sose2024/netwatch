@@ -11,6 +11,7 @@ use crypto_layer::{
                 KeyBits,
             },
             KeyUsage,
+            EncryptionMode,
         },
         error::SecurityModuleError,
         factory::{SecModules, SecurityModule},
@@ -18,20 +19,20 @@ use crypto_layer::{
     tpm::{
         android::{
             android_logger::DefaultAndroidLogger,
-            config::{AndroidConfig, EncryptionMode},
+            config::AndroidConfig,
         },
         core::instance::TpmType,
     },
 };
 use robusta_jni::jni::{
     objects::{JClass, JObject, JString},
-    sys::{jboolean, jbyteArray},
+    sys::{jarray, jboolean, jbyteArray},
     JNIEnv, JavaVM,
 };
 use tracing::{debug, error, warn};
 
-fn generate_new_key(key: String, algorithm: String, vm: JavaVM) -> Result<(), SecurityModuleError> {
-    let mode = match algorithm.borrow() {
+fn create_config(mode: &str, hardware_backed: bool) -> AndroidConfig {
+    let mode = match mode {
         "RSA" => EncryptionMode::ASym {
             algo: AsymmetricEncryption::Rsa(KeyBits::Bits512),
             digest: Hash::Sha2(Sha2Bits::Sha256),
@@ -42,19 +43,56 @@ fn generate_new_key(key: String, algorithm: String, vm: JavaVM) -> Result<(), Se
         },
         "AES" => EncryptionMode::Sym(BlockCiphers::Aes(SymmetricMode::Cbc, KeyBits::Bits256)),
 
-        _ => panic!(),
+        _ => {
+            // read capabilities and get mode from there
+            let caps = SecModules::get_capabilities(SecurityModule::Tpm(TpmType::Android(
+                crypto_layer::tpm::core::instance::AndroidTpmType::Keystore,
+            )));
+            
+            caps.into_iter().find(|cap| cap.name == mode).unwrap().mode
+        }
     };
 
-    let config = AndroidConfig {
+    AndroidConfig {
         mode: mode,
-        hardware_backed: false,
+        hardware_backed: hardware_backed,
         key_usages: vec![
             KeyUsage::Decrypt,
             KeyUsage::SignEncrypt,
             KeyUsage::CreateX509,
         ],
-        vm: Some(vm),
-    };
+        vm: None,
+    }
+}
+
+#[no_mangle]
+pub unsafe extern "C" fn Java_com_example_netwatch_RustNetwatch_getCapabilities(
+    env: JNIEnv,
+    _: JClass,
+) -> jarray {
+
+    let caps = SecModules::get_capabilities(SecurityModule::Tpm(TpmType::Android(
+        crypto_layer::tpm::core::instance::AndroidTpmType::Keystore,
+    )));
+
+    let output = env
+        .new_object_array(caps.len() as i32, "java/lang/String", JObject::null())
+        .expect("Couldn't create java array");
+
+    for (i, cap) in caps.iter().enumerate() {
+        let cap = env
+            .new_string(cap.name)
+            .expect("Couldn't create java string");
+        env.set_object_array_element(output, i as i32, cap)
+            .expect("Couldn't set array element");
+    }
+
+    output
+}
+
+fn generate_new_key(key: String, algorithm: String, vm: JavaVM) -> Result<(), SecurityModuleError> {
+    let mut config = create_config(algorithm.borrow(), true);
+    config.vm = Some(vm);
 
     debug!("generating key: {key}");
     let provider = SecModules::get_instance(
@@ -111,30 +149,9 @@ fn encrypt(
 
     let mut provider = provider.lock().unwrap();
 
-    let mode = match algorithm.borrow() {
-        "RSA" => EncryptionMode::ASym {
-            algo: AsymmetricEncryption::Rsa(KeyBits::Bits512),
-            digest: Hash::Sha2(Sha2Bits::Sha256),
-        },
-        "EC" => EncryptionMode::ASym {
-            algo: AsymmetricEncryption::Ecc(algorithms::encryption::EccSchemeAlgorithm::Null),
-            digest: Hash::Sha2(Sha2Bits::Sha256),
-        },
-        "AES" => EncryptionMode::Sym(BlockCiphers::Aes(SymmetricMode::Cbc, KeyBits::Bits256)),
+    let mut config = create_config(algorithm.borrow(), true);
+    config.vm = Some(vm);
 
-        _ => panic!(),
-    };
-
-    let config = AndroidConfig {
-        mode: mode,
-        hardware_backed: false,
-        key_usages: vec![
-            KeyUsage::Decrypt,
-            KeyUsage::SignEncrypt,
-            KeyUsage::CreateX509,
-        ],
-        vm: Some(vm),
-    };
     provider.initialize_module().unwrap();
     provider.load_key(&key, Box::new(config)).unwrap();
 
@@ -199,30 +216,8 @@ fn decrypt(
 
     let mut provider = provider.lock().unwrap();
 
-    let mode = match algorithm.borrow() {
-        "RSA" => EncryptionMode::ASym {
-            algo: AsymmetricEncryption::Rsa(KeyBits::Bits512),
-            digest: Hash::Sha2(Sha2Bits::Sha256),
-        },
-        "EC" => EncryptionMode::ASym {
-            algo: AsymmetricEncryption::Ecc(algorithms::encryption::EccSchemeAlgorithm::Null),
-            digest: Hash::Sha2(Sha2Bits::Sha256),
-        },
-        "AES" => EncryptionMode::Sym(BlockCiphers::Aes(SymmetricMode::Cbc, KeyBits::Bits256)),
-
-        _ => panic!(),
-    };
-
-    let config = AndroidConfig {
-        mode: mode,
-        hardware_backed: true,
-        key_usages: vec![
-            KeyUsage::Decrypt,
-            KeyUsage::SignEncrypt,
-            KeyUsage::CreateX509,
-        ],
-        vm: Some(vm),
-    };
+    let mut config = create_config(algorithm.borrow(), true);
+    config.vm = Some(vm);
 
     provider.initialize_module().unwrap();
     provider.load_key(&key_id, Box::new(config)).unwrap();
@@ -242,7 +237,13 @@ pub unsafe extern "C" fn Java_com_example_netwatch_RustNetwatch_decrypt(
     let key_id: String = env.get_string(key_id).expect("Couldn't get key ID").into();
     let algorithm: String = env.get_string(algorithm).expect("Couldn't get algo").into();
 
-    let length = env.get_array_length(array_ref).unwrap();
+    let length = match env.get_array_length(array_ref) {
+        Ok(length) => length,
+        Err(e) => {
+            handle_error(&mut env, SecurityModuleError::InitializationError(e.to_string()));
+            return *JObject::null();
+        }
+    };
     let mut bytes = vec![0; length as usize];
     env.get_byte_array_region(array_ref, 0, &mut bytes).unwrap();
 
@@ -288,29 +289,8 @@ fn sign(
 
     let mut provider = provider.lock().unwrap();
 
-    let mode = match algorithm.borrow() {
-        "RSA" => EncryptionMode::ASym {
-            algo: AsymmetricEncryption::Rsa(KeyBits::Bits512),
-            digest: Hash::Sha2(Sha2Bits::Sha256),
-        },
-        "EC" => EncryptionMode::ASym {
-            algo: AsymmetricEncryption::Ecc(algorithms::encryption::EccSchemeAlgorithm::Null),
-            digest: Hash::Sha2(Sha2Bits::Sha256),
-        },
-        "AES" => EncryptionMode::Sym(BlockCiphers::Aes(SymmetricMode::Cbc, KeyBits::Bits256)),
-        _ => panic!(),
-    };
-
-    let config = AndroidConfig {
-        mode: mode,
-        hardware_backed: true,
-        key_usages: vec![
-            KeyUsage::Decrypt,
-            KeyUsage::SignEncrypt,
-            KeyUsage::CreateX509,
-        ],
-        vm: Some(vm),
-    };
+    let mut config = create_config(algorithm.borrow(), true);
+    config.vm = Some(vm);
 
     provider.initialize_module().unwrap();
 
@@ -378,29 +358,8 @@ fn verify(
 
     let mut provider = provider.lock().unwrap();
 
-    let mode = match algorithm.borrow() {
-        "RSA" => EncryptionMode::ASym {
-            algo: AsymmetricEncryption::Rsa(KeyBits::Bits512),
-            digest: Hash::Sha2(Sha2Bits::Sha256),
-        },
-        "EC" => EncryptionMode::ASym {
-            algo: AsymmetricEncryption::Ecc(algorithms::encryption::EccSchemeAlgorithm::Null),
-            digest: Hash::Sha2(Sha2Bits::Sha256),
-        },
-        "AES" => EncryptionMode::Sym(BlockCiphers::Aes(SymmetricMode::Cbc, KeyBits::Bits256)),
-        _ => panic!(),
-    };
-
-    let config = AndroidConfig {
-        mode: mode,
-        hardware_backed: true,
-        key_usages: vec![
-            KeyUsage::Decrypt,
-            KeyUsage::SignEncrypt,
-            KeyUsage::CreateX509,
-        ],
-        vm: Some(vm),
-    };
+    let mut config = create_config(algorithm.borrow(), true);
+    config.vm = Some(vm);
 
     provider.initialize_module().unwrap();
     provider.load_key(&key_id, Box::new(config)).unwrap();
