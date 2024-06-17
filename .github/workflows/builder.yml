@@ -1,6 +1,8 @@
 on: [push, pull_request]
 name: Android emulator
 
+
+
 permissions:
   contents: write
   
@@ -16,6 +18,11 @@ env:
   ANDROID_SDK_PACKAGES: system-images;android-33;google_apis_playstore;x86_64 platforms;android-33 build-tools;33.0.2 platform-tools emulator
   EMULATOR_TIMEOUT: 350
   EMULATOR_NAME: nexus
+   # The name of the main module repository
+  main_project_module: app
+
+  # The name of the Play Store
+  playstore_name: Frogobox ID
 
 jobs:
   playwright-emulator:
