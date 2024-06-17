@@ -64,7 +64,14 @@ jobs:
            cargo ndk -t arm64-v8a -o ./  build
 
 
-      - name: Release
-        run: |
-          gh release upload gh release upload ${{github.event.release.tag_name}} ./libprototype_rust_wrapper.so
+#      - name: Release
+#        run: |
+#          gh release upload gh release upload ${{github.event.release.tag_name}} ./libprototype_rust_wrapper.so
+      - name: Upload binaries to release
+        uses: svenstaro/upload-release-action@v2
+        with:
+            repo_token: ${{ secrets.GITHUB_TOKEN }}
+            file: target/release/${{ matrix.artifact_name }}
+            asset_name: ${{ matrix.asset_name }}
+            tag: ${{ github.ref }}
 
