@@ -61,6 +61,6 @@ jobs:
             
       - name: building ndk
         run: |
-           cargo ndk -t arm64-v8a -o jniLibs/  build
-           gh release upload gh release upload ${{github.event.release.tag_name}} jniLibs/libprototype_rust_wrapper.so
+           cargo ndk -t arm64-v8a -o ./  build
+           gh release upload gh release upload ${{github.event.release.tag_name}} ./libprototype_rust_wrapper.so
 
