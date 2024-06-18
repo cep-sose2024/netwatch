@@ -68,7 +68,7 @@ jobs:
           node-version: 18
             
       - name: prems
-        run: chmod +x gradlew
+        run: chmod +x ./gradlew
       - name: Build Release apk
         env:
               RELEASE_KEYSTORE_PASSWORD: ${{ secrets.RELEASE_KEYSTORE_PASSWORD }}
