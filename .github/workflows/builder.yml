@@ -83,5 +83,5 @@ jobs:
         uses: actions/upload-artifact@v3
         with:
           name: library
-          path:  ../prototype/app/src/main/jniLibs/
+          path: /Users/runner/work/netwatch/netwatch/prototype/app/src/main/jniLibs
         
