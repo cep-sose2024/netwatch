@@ -84,7 +84,7 @@ jobs:
       - name: upload artifact
         uses: actions/upload-artifact@v3
         with:
-          name: library
+          name: apk
           path: ./
 
 
@@ -95,7 +95,7 @@ jobs:
       - name: Downloading artifact
         uses: actions/download-artifact@v3
         with:
-          name: library
+          name: apk
       - name: prems
         run: chmod +x gradlew
       - name: Build Release apk
