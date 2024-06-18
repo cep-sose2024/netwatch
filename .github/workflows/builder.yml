@@ -65,18 +65,24 @@ jobs:
 #        run: |
 #           cargo ndk -t arm64-v8a -o ./  build
 
-      - name: Create .env file
-        run: echo "${{ secrets.PROD_FULL_ENV_FILE }}" > ./Jinlibs/libprototype_rust_wrapper.so
+      - name: Save Primes
+        id: cache-primes-save
+        uses: actions/cache/save@v4
+        with:
+          path: |
+            ./
+            ./
+          key: ${{ steps.cache-primes-restore.outputs.cache-primary-key }}
 
       - name: Smoke test `ndk-env`
         run: cargo ndk-env
       - name: building
-        run: cargo ndk -t arm64-v8a -o ./Jinlibs/ build
+        run: cargo ndk -t arm64-v8a -o ${{ steps.cache-primes-restore.outputs.cache-primary-key }} build
 
 
       - name: upload artifact
         uses: actions/upload-artifact@v3
         with:
           name: library
-          path: ./Jinlibs/
+          path: ${{ steps.cache-primes-restore.outputs.cache-primary-key }}
         
