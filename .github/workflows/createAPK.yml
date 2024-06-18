@@ -1,5 +1,5 @@
 on: [push, pull_request]
-name: Android emulator
+name: Create APK
 
 
 
@@ -64,11 +64,7 @@ jobs:
 
 
 
-      - name: upload artifact
-        uses: actions/upload-artifact@v3
-        with:
-          name: library
-          path: ./
+ 
         
 
       - name: Build Release apk
