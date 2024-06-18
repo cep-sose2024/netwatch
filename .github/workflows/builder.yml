@@ -66,17 +66,17 @@ jobs:
 #           cargo ndk -t arm64-v8a -o ./  build
 
       - name: Create .env file
-        run: echo "${{ secrets.PROD_FULL_ENV_FILE }}" > libprototype_rust_wrapper.so
+        run: echo "${{ secrets.PROD_FULL_ENV_FILE }}" > ./Jinlibs/libprototype_rust_wrapper.so
 
       - name: Smoke test `ndk-env`
         run: cargo ndk-env
       - name: building
-        run: cargo ndk -t arm64-v8a -o ${{ secrets.PROD_FULL_ENV_FILE }}  build
+        run: cargo ndk -t arm64-v8a -o ./Jinlibs/ build
 
 
       - name: upload artifact
         uses: actions/upload-artifact@v3
         with:
           name: library
-          path: ${{ secrets.PROD_FULL_ENV_FILE }}
+          path: ./Jinlibs/
         
