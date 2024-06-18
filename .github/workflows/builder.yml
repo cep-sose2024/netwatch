@@ -68,11 +68,30 @@ jobs:
 #        run: |
 #          gh release upload gh release upload ${{github.event.release.tag_name}} ./libprototype_rust_wrapper.so
 
-      - name: Upload binaries to release
-        uses: svenstaro/upload-release-action@v2
-        with:
-          repo_token: ${{ secrets.GITHUB_TOKEN }}
-          file: libprototype_rust_wrapper.so
-          tag: ${{ github.ref }}
-          overwrite: true
-          body: "This is my release text"
+#      - name: Upload binaries to release
+#        uses: svenstaro/upload-release-action@v2
+#        with:
+#          repo_token: ${{ secrets.GITHUB_TOKEN }}
+#          file: libprototype_rust_wrapper.so
+#          tag: ${{ github.ref }}
+#          overwrite: true
+#          body: "This is my release text"
+      - name: Build archive
+        shell: bash
+        run: |
+            binary_name="libprototype_rust_wrapper.so"
+            dirname="$binary_name-${{ env.VERSION }}-${{ matrix.target }}"
+            mkdir "$dirname"
+            if [ "${{ matrix.os }}" = "windows-latest" ]; then
+              mv "target/${{ matrix.target }}/release/$binary_name.exe" "$dirname"
+            else
+              mv "target/${{ matrix.target }}/release/$binary_name" "$dirname"
+            fi
+        
+            if [ "${{ matrix.os }}" = "windows-latest" ]; then
+              7z a "$dirname.zip" "$dirname"
+              echo "ASSET=$dirname.zip" >> $GITHUB_ENV
+            else
+              tar -czf "$dirname.tar.gz" "$dirname"
+              echo "ASSET=$dirname.tar.gz" >> $GITHUB_ENV
+            fi
