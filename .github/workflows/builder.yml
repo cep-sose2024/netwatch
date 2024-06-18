@@ -68,12 +68,12 @@ jobs:
       - name: Smoke test `ndk-env`
         run: cargo ndk-env
       - name: building
-        run: cargo ndk -t arm64-v8a -o jniLibs  build
+        run: cargo ndk -t arm64-v8a -o ${{ matrix.target }}  build
 
 
       - name: upload artifact
         uses: actions/upload-artifact@v3
         with:
           name: library
-          path: target/debug/jniLibs
+          path: ${{ matrix.target }}
         
