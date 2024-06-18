@@ -2,11 +2,6 @@ on: [push, pull_request]
 name: Create APK
 
 
-on: [push, pull_request]
-name: Android emulator
-
-
-
 permissions:
   contents: write
   
@@ -91,10 +86,12 @@ jobs:
           cache: 'gradle'
 
       - name: Change wrapper permissions
+        working-directory: ./prototype
         run: chmod +x ./gradlew
 
         
       - name: Build Release apk
+        working-directory: ./prototype
         env:
               RELEASE_KEYSTORE_PASSWORD: ${{ secrets.RELEASE_KEYSTORE_PASSWORD }}
               RELEASE_KEYSTORE_ALIAS: ${{ secrets.RELEASE_KEYSTORE_ALIAS }}
@@ -102,6 +99,7 @@ jobs:
         run: ./gradlew assembleRelease --stacktrace
     
       - name: Build Release bundle
+        working-directory: ./prototype
         env:
               RELEASE_KEYSTORE_PASSWORD: ${{ secrets.RELEASE_KEYSTORE_PASSWORD }}
               RELEASE_KEYSTORE_ALIAS: ${{ secrets.RELEASE_KEYSTORE_ALIAS }}
