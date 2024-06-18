@@ -2,6 +2,10 @@ on: [push, pull_request]
 name: Create APK
 
 
+on: [push, pull_request]
+name: Android emulator
+
+
 
 permissions:
   contents: write
@@ -28,24 +32,31 @@ env:
   shell: bash
 
 jobs:
-  build-APK:
+  playwright-emulator:
     timeout-minutes: 20
     runs-on: macos-latest
     steps:
-      - uses: actions/checkout@v3   
+      - uses: actions/checkout@v3
+        
       - name: Add avdmanager and sdkmanager to system PATH
         run: |
             echo "$ANDROID_HOME/cmdline-tools/latest/bin:$ANDROID_HOME/emulator:$ANDROID_HOME/tools:$ANDROID_HOME/platform-tools:$ANDROID_HOME/build-tools/${{ env.ANDROID_BUILD_TOOLS_VERSION }}" >> $GITHUB_PATH
+
       - name: Install Sdk
         run: |
            yes Y | sdkmanager --licenses
            sdkmanager --install ${ANDROID_SDK_PACKAGES}
+  
       - name: Build emulator
         run: |
             echo "no" | avdmanager --verbose create avd --force -n $EMULATOR_NAME --abi "${ANDROID_TARGET}/${ANDROID_ARCH}" -k "system-images;android-${API_LEVEL};${ANDROID_TARGET};${ANDROID_ARCH}"
+
+
+        
       - name: install NDK
         run: |
             cargo install cargo-ndk
+
       - name: rustup
         run: |
             rustup target add \
@@ -53,20 +64,36 @@ jobs:
             armv7-linux-androideabi \
             x86_64-linux-android \
             i686-linux-android
+            
+#      - name: building ndk
+#        run: |
+#           cargo ndk -t arm64-v8a -o ./  build
+
+
+
       - name: Smoke test `ndk-env`
         run: cargo ndk-env
       - name: building arm64-v8a
         run: cargo ndk -t arm64-v8a -o ../prototype/app/src/main/jniLibs/ build
+
+
+
       - name: building i686-linux-android
         run: cargo ndk -t i686-linux-android -o ../prototype/app/src/main/jniLibs/ build
 
 
-   
-      - name: Build npm
-        uses: actions/setup-node@v4
+
+      - name: Set Up JDK
+        uses: actions/setup-java@v3
         with:
-          node-version: 18
-            
+          distribution: 'zulu' # See 'Supported distributions' for available options
+          java-version: '17'
+          cache: 'gradle'
+
+      - name: Change wrapper permissions
+        run: chmod +x ./gradlew
+
+        
       - name: Build Release apk
         env:
               RELEASE_KEYSTORE_PASSWORD: ${{ secrets.RELEASE_KEYSTORE_PASSWORD }}
