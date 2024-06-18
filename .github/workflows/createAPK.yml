@@ -60,15 +60,36 @@ jobs:
             armv7-linux-androideabi \
             x86_64-linux-android \
             i686-linux-android
+
             
+      - name: Smoke test `ndk-env`
+        run: cargo ndk-env
+      - name: building arm64-v8a
+        run: cargo ndk -t arm64-v8a -o ../prototype/app/src/main/jniLibs/ build
+
+
+
+      - name: building i686-linux-android
+        run: cargo ndk -t i686-linux-android -o ../prototype/app/src/main/jniLibs/ build
+
+
+
+      - name: upload artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: library
+          path: ./
 
 
       - name: prems
         run: chmod +x gradlew
 
 
-        
-
+    
+      - name: Downloading artifact
+        uses: actions/download-artifact@v3
+        with:
+          name: okaySOO
       - name: Build Release apk
         env:
               RELEASE_KEYSTORE_PASSWORD: ${{ secrets.RELEASE_KEYSTORE_PASSWORD }}
