@@ -108,7 +108,7 @@ jobs:
             i686-linux-android
   
       - name: Downloading artifact
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v3
         with:
           name: apk
       - name: prems
@@ -131,5 +131,5 @@ jobs:
       - name: upload artifact
         uses: actions/upload-artifact@v3
         with:
-          name: apk
+          name: apk2
           path: ./
