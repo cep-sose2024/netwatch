@@ -6,34 +6,24 @@ import android.content.Context
 import android.content.Intent
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
-import android.net.IpSecAlgorithm
 import android.net.Uri
 import android.os.Bundle
-import android.os.PersistableBundle
 import android.util.Log
 import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.compose.setContent
-import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.layout.wrapContentHeight
-import androidx.compose.foundation.layout.wrapContentWidth
-import androidx.compose.material3.BasicAlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExposedDropdownMenuBox
 import androidx.compose.material3.ExposedDropdownMenuDefaults
-import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Tab
@@ -42,13 +32,12 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableFloatStateOf
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.focus.focusModifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.compose.ui.unit.dp
@@ -168,7 +157,7 @@ fun TabScreen(
     contentResolver: ContentResolver,
     context: Context,
     ) {
-    var tabIndex by remember { mutableStateOf(0) }
+    var tabIndex by remember { mutableIntStateOf(0) }
 
     val tabs = listOf("Text", "Image")
 
@@ -194,7 +183,7 @@ fun TextEncrypter() {
     var encText by remember { mutableStateOf("") }
     var showAlert by remember { mutableStateOf(false) }
     var exceptionName by remember { mutableStateOf("") }
-    var algorithms = RustNetwatch.getCapabilities()
+    val algorithms = RustNetwatch.getCapabilities()
     var algorithm by remember { mutableStateOf("AES") }
     var signatureText by remember { mutableStateOf("") }
     var verificationStatus by remember { mutableStateOf("") }
@@ -319,11 +308,9 @@ fun ImageEncrypter(
     ) {
     var imageUri: Uri? by remember { mutableStateOf(null) }
     var encryptedImageUri: Uri? by remember { mutableStateOf(null) }
-    var progress by remember { mutableFloatStateOf(0f) }
     var showAlert by remember { mutableStateOf(false) }
     var exceptionName by remember { mutableStateOf("") }
-    var algorithms = RustNetwatch.getCapabilities()
-    var algorithm by remember { mutableStateOf("AES") }
+    val algorithm by remember { mutableStateOf("AES") }
 
     val alert = { e: Exception ->
         showAlert = true
@@ -332,7 +319,7 @@ fun ImageEncrypter(
 
     val lifecycleOwner = LocalLifecycleOwner.current
 
-    var createEncryptLauncher =
+    val createEncryptLauncher =
         rememberLauncherForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
             if (result.resultCode == Activity.RESULT_OK) {
                 val outputUri = result.data?.data
@@ -344,7 +331,7 @@ fun ImageEncrypter(
             }
         }
 
-    var createDecryptLauncher =
+    val createDecryptLauncher =
         rememberLauncherForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
             if (result.resultCode == Activity.RESULT_OK) {
                 val outputUri = result.data?.data
@@ -487,190 +474,10 @@ fun ImageEncrypter(
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun EncryptTest(
-    encryptionState: String,
-    imageUri: Uri?,
-    encryptedImageUri: Uri?,
-    pickImage: ActivityResultLauncher<Intent>,
-    pickEncryptedImage: ActivityResultLauncher<Intent>,
-    encryptAndSaveImage: () -> Unit,
-    decryptAndSaveImage: () -> Unit,
-    progress: Float,
-) {
-    var text by remember { mutableStateOf("Hello World") }
-    var encText by remember { mutableStateOf("") }
-    var signatureText by remember { mutableStateOf("") }
-    var verificationStatus by remember { mutableStateOf("") }
-    var showAlert by remember { mutableStateOf(false) }
-    var exceptionName by remember { mutableStateOf("") }
-
-    val alert = { e: Exception ->
-        showAlert = true
-        exceptionName = e.toString()
-    }
-
-    Column {
-        Row {
-            Button(onClick = {
-                try {
-                    thread {
-                        CryptoLayerRust.generateAESKey()
-                    }
-                } catch (e: Exception) {
-                    alert(e)
-                }
-            }) {
-                Text("Generate Key")
-            }
-        }
-        if (encryptionState == "text") {
-            TextField(value = text, onValueChange = { text = it }, label = { Text("Message") })
-            Button(onClick = {
-                try {
-                    encText = CryptoLayerRust.encryptText(text, "AES")
-                } catch (e: Exception) {
-                    alert(e)
-                }
-            }) {
-                Text("Encrypt")
-            }
-            TextField(
-                value = encText,
-                onValueChange = {},
-                enabled = false,
-            )
-            Button(onClick = {
-                try {
-                    val dec = CryptoLayerRust.decryptText(encText, "AES")
-                    encText = dec
-                } catch (e: Exception) {
-                    alert(e)
-                }
-            }) {
-                Text("Decrypt")
-            }
-            TextField(value = signatureText,
-                onValueChange = {},
-                enabled = false,
-                label = { Text("Signature") })
-            Button(onClick = {
-                try {
-                    signatureText = CryptoLayerRust.signText(encText, "EC")
-                } catch (e: Exception) {
-                    alert(e)
-                }
-            }) {
-                Text("Sign")
-            }
-            Button(onClick = {
-                try {
-                    val verified = CryptoLayerRust.verifyText(encText, signatureText, "EC")
-                    verificationStatus = if (verified) "Verified" else "Not Verified"
-                } catch (e: Exception) {
-                    alert(e)
-                }
-            }) {
-                Text("Verify Signature")
-            }
-            Text(text = verificationStatus)
-            Button(onClick = {
-                try {
-                    CryptoLayerRust.generateECKey()
-                } catch (e: Exception) {
-                    alert(e)
-                }
-            }) {
-                Text("Generate Signing Key")
-            }
-        } else {
-            Button(onClick = {
-                val intent = Intent(Intent.ACTION_OPEN_DOCUMENT).apply {
-                    addCategory(Intent.CATEGORY_OPENABLE)
-                    type = "image/*"
-                }
-                pickImage.launch(intent)
-            }) {
-                Text("Select an image")
-            }
-            Text("Selected Image URI: $imageUri")
-            Button(onClick = {
-                try {
-                    if (imageUri != null) {
-                        encryptAndSaveImage()
-                    }
-                } catch (e: Exception) {
-                    Log.e("ImageEncryption", "Error encrypting image", e)
-                }
-            }) {
-                Text("Encrypt")
-            }
-
-            // Decrypt image
-            Button(onClick = {
-                val intent = Intent(Intent.ACTION_OPEN_DOCUMENT).apply {
-                    addCategory(Intent.CATEGORY_OPENABLE)
-                    type = "image/*"
-                }
-                pickEncryptedImage.launch(intent)
-            }) {
-                Text("Select an encrypted image")
-            }
-            Text("Selected Image URI: $encryptedImageUri")
-            Button(onClick = {
-                try {
-                    if (encryptedImageUri != null) {
-                        decryptAndSaveImage()
-                    }
-                } catch (e: Exception) {
-                    Log.e("ImageEncryption", "Error decrypting image", e)
-                }
-            }) {
-                Text("Decrypt")
-            }
-
-            Row(
-                modifier = Modifier.padding(top = 48.dp)
-            ) {
-                LinearProgressIndicator(
-                    progress = { progress },
-                    modifier = Modifier
-                        .weight(1f)
-                        .padding(top = 10.dp, start = 4.dp, end = 4.dp),
-                )
-                Text(
-                    text = (progress * 100).toInt().toString() + "%",
-                    modifier = Modifier
-                        .wrapContentWidth()
-                        .padding(end = 4.dp),
-                )
-            }
-        }
-    }
-
-    when {
-        showAlert -> {
-            BasicAlertDialog(onDismissRequest = { showAlert = false }, content = {
-                Surface(
-                    modifier = Modifier
-                        .wrapContentWidth()
-                        .wrapContentHeight(),
-                    shape = MaterialTheme.shapes.large
-                ) {
-                    Column(modifier = Modifier.padding(16.dp)) {
-                        Text(text = exceptionName)
-                    }
-                }
-            })
-        }
-    }
-}
-
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
-fun Demo_ExposedDropdownMenuBox(algos: Array<String>, onChange: (String) -> Unit) {
+fun Demo_ExposedDropdownMenuBox(algorithms: Array<String>, onChange: (String) -> Unit) {
     val context = LocalContext.current
     var expanded by remember { mutableStateOf(false) }
-    var selectedText by remember { mutableStateOf(algos[0]) }
+    var selectedText by remember { mutableStateOf(algorithms[0]) }
 
     Box(
         modifier = Modifier
@@ -695,7 +502,7 @@ fun Demo_ExposedDropdownMenuBox(algos: Array<String>, onChange: (String) -> Unit
                 expanded = expanded,
                 onDismissRequest = { expanded = false }
             ) {
-                algos.forEach { item ->
+                algorithms.forEach { item ->
                     DropdownMenuItem(
                         text = { Text(text = item) },
                         onClick = {
