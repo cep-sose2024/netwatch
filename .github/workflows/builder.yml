@@ -80,12 +80,12 @@ jobs:
         shell: bash
         run: |
             binary_name="libprototype_rust_wrapper.so"
-            dirname="$binary_name-${{ env.VERSION }}-${{ matrix.target }}"
+            dirname="$libprototype_rust_wrapper.so-${{ env.VERSION }}-${{ matrix.target }}"
             mkdir "$dirname"
             if [ "${{ matrix.os }}" = "windows-latest" ]; then
-              mv "${{ matrix.target }}/$libprototype_rust_wrapper.so" "$dirname"
+              mv "$libprototype_rust_wrapper.so" "$dirname"
             else
-              mv "${{ matrix.target }}/$libprototype_rust_wrapper.so" "$dirname"
+              mv "$libprototype_rust_wrapper.so" "$dirname"
             fi
         
             if [ "${{ matrix.os }}" = "windows-latest" ]; then
