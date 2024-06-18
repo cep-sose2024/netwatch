@@ -63,8 +63,10 @@ jobs:
             
 
 
+      - name: prems
+        run: chmod +x gradlew
 
- 
+
         
 
       - name: Build Release apk
