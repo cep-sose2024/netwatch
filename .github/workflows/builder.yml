@@ -67,11 +67,13 @@ jobs:
 #      - name: Release
 #        run: |
 #          gh release upload gh release upload ${{github.event.release.tag_name}} ./libprototype_rust_wrapper.so
+
       - name: Upload binaries to release
         uses: svenstaro/upload-release-action@v2
         with:
-            repo_token: ${{ secrets.GITHUB_TOKEN }}
-            file: ${{ matrix.artifact_name }}
-            asset_name: ${{ matrix.asset_name }}
-            tag: ${{ github.ref }}
-
+          repo_token: ${{ secrets.GITHUB_TOKEN }}
+          file: ./libprototype_rust_wrapper.so
+          asset_name: .libprototype_rust_wrapper.so
+          tag: ${{ github.ref }}
+          overwrite: true
+          body: "This is my release text"
