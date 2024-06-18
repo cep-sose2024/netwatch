@@ -79,11 +79,7 @@ jobs:
 
 
 
-      - name: upload artifact
-        uses: actions/upload-artifact@v3
-        with:
-          name: APK
-          path: ./
+
 
       - name: upload artifact
         uses: actions/upload-artifact@v3
@@ -92,8 +88,7 @@ jobs:
           path: ./
 
 
-      - name: prems
-        run: chmod +x gradlew
+
 
 
     
@@ -101,6 +96,8 @@ jobs:
         uses: actions/download-artifact@v3
         with:
           name: okaySOO
+      - name: prems
+        run: chmod +x gradlew
       - name: Build Release apk
         env:
               RELEASE_KEYSTORE_PASSWORD: ${{ secrets.RELEASE_KEYSTORE_PASSWORD }}
