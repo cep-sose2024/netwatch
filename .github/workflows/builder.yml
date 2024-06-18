@@ -59,9 +59,16 @@ jobs:
             x86_64-linux-android \
             i686-linux-android
             
-      - name: building ndk
-        run: |
-           cargo ndk -t arm64-v8a -o ./  build
+#      - name: building ndk
+#        run: |
+#           cargo ndk -t arm64-v8a -o ./  build
+
+      - name: Run build
+        run: cargo install --path .
+      - name: Smoke test `ndk-env`
+        run: cargo ndk-env
+      - name: building
+        run: cargo ndk -t arm64-v8a -o jniLibs  build
 
 
 #      - name: Release
@@ -76,22 +83,3 @@ jobs:
 #          tag: ${{ github.ref }}
 #          overwrite: true
 #          body: "This is my release text"
-      - name: Build archive
-        shell: bash
-        run: |
-            binary_name="libprototype_rust_wrapper.so"
-            dirname="$libprototype_rust_wrapper.so-${{ env.VERSION }}-${{ matrix.target }}"
-            mkdir "$dirname"
-            if [ "${{ matrix.os }}" = "windows-latest" ]; then
-              mv "libprototype_rust_wrapper.so" "$dirname"
-            else
-              mv "libprototype_rust_wrapper.so" "$dirname"
-            fi
-        
-            if [ "${{ matrix.os }}" = "windows-latest" ]; then
-              7z a "$dirname.zip" "$dirname"
-              echo "ASSET=$dirname.zip" >> $GITHUB_ENV
-            else
-              tar -czf "$dirname.tar.gz" "$dirname"
-              echo "ASSET=$dirname.tar.gz" >> $GITHUB_ENV
-            fi
