@@ -124,7 +124,7 @@ jobs:
             i686-linux-android
   
       - name: Downloading artifact
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
         with:
           name: apk
       - name: prems
