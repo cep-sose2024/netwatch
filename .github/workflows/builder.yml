@@ -75,5 +75,5 @@ jobs:
         uses: actions/upload-artifact@v3
         with:
           name: library
-          path: ./jniLibs
+          path: target/debug/jniLibs
         
