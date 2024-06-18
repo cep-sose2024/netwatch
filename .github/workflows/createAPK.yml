@@ -83,8 +83,6 @@ jobs:
               RELEASE_KEY_PASSWORD: ${{ secrets.RELEASE_KEY_PASSWORD }}
         run: ./gradlew bundleRelease --stacktrace
 
-      - name: Building apk
-        run: react-native run-android --variant=release
 
       - name: upload artifact
         uses: actions/upload-artifact@v3
