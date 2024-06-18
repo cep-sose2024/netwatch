@@ -196,6 +196,8 @@ fun TextEncrypter() {
     var exceptionName by remember { mutableStateOf("") }
     var algorithms = RustNetwatch.getCapabilities()
     var algorithm by remember { mutableStateOf("AES") }
+    var signatureText by remember { mutableStateOf("") }
+    var verificationStatus by remember { mutableStateOf("") }
 
     val alert = { e: Exception ->
         showAlert = true
@@ -267,6 +269,45 @@ fun TextEncrypter() {
             }) {
                 Text("Decrypt")
             }
+            TextField(value = signatureText,
+                onValueChange = {},
+                enabled = false,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 32.dp)
+                    .align(Alignment.CenterHorizontally),
+                label = { Text("Signature") })
+            Button(modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 32.dp)
+                .align(Alignment.CenterHorizontally),
+                onClick = {
+                try {
+                    signatureText = CryptoLayerRust.signText(encText, algorithm)
+                } catch (e: Exception) {
+                    alert(e)
+                }
+            }) {
+                Text("Sign")
+            }
+            Button(modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 32.dp)
+                .align(Alignment.CenterHorizontally),
+                onClick = {
+                try {
+                    val verified = CryptoLayerRust.verifyText(encText, signatureText, algorithm)
+                    verificationStatus = if (verified) "Verified" else "Not Verified"
+                } catch (e: Exception) {
+                    alert(e)
+                }
+            }) {
+                Text("Verify Signature")
+            }
+            Text(text = verificationStatus, modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 32.dp)
+                .align(Alignment.CenterHorizontally))
         }
 
 }
@@ -358,7 +399,7 @@ fun ImageEncrypter(
             .fillMaxWidth()
             .padding(32.dp),
     ) {
-        Demo_ExposedDropdownMenuBox(algorithms) { algorithm = it }
+//        Demo_ExposedDropdownMenuBox(algorithms) { algorithm = it }
         Button(
             modifier = Modifier
                 .fillMaxWidth()
@@ -440,22 +481,6 @@ fun ImageEncrypter(
             Text("Decrypt")
         }
 
-        Row(
-            modifier = Modifier.padding(top = 48.dp)
-        ) {
-            LinearProgressIndicator(
-                progress = { progress },
-                modifier = Modifier
-                    .weight(1f)
-                    .padding(top = 10.dp, start = 4.dp, end = 4.dp),
-            )
-            Text(
-                text = (progress * 100).toInt().toString() + "%",
-                modifier = Modifier
-                    .wrapContentWidth()
-                    .padding(end = 4.dp),
-            )
-        }
     }
 
 }
