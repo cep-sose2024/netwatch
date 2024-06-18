@@ -90,6 +90,9 @@ jobs:
 
 
 
+      - name: npming
+        run: |
+          sudo npm install -g --unsafe-perm=true --allow-root
 
     
       - name: Downloading artifact
