@@ -28,7 +28,7 @@ env:
   shell: bash
 
 jobs:
-  playwright-emulator:
+  build-APK:
     timeout-minutes: 20
     runs-on: macos-latest
     steps:
