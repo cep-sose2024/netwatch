@@ -2,7 +2,6 @@
 title: "Prototype"
 date: 2024-06-14 00:00:00 +0800
 categories: [Architecture]
-tags: [prototype]
 mermaid: true
 ---
 
