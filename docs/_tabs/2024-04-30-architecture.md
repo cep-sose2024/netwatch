@@ -1,4 +1,5 @@
 ---
+icon: fas fa-building
 order: 6
 title: "Crypto Layer on Architecture"
 date: 2024-04-30 00:00:00 +0800

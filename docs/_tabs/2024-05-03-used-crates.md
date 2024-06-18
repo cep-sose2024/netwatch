@@ -1,4 +1,5 @@
 ---
+icon: fab fa-rust
 title: "Libraries"
 date: 2024-05-08 00:00:00 +0800
 categories: [Code Quality]

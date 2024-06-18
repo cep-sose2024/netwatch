@@ -1,4 +1,6 @@
 ---
+icon: fas fa-play
+order: 5
 title: "Getting Started"
 date: 2024-04-00 00:00:00 +0800
 categories: [Getting Stared]

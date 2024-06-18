@@ -1,5 +1,6 @@
 ---
-order: 5
+order: 6
+icon: fas fa-arrow-right
 title: "Next Steps"
 date: 2024-04-28 00:00:00 +0800
 categories: [Future Actions]
