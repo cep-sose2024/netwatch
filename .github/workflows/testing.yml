@@ -101,7 +101,7 @@ jobs:
 
   Testing-evn:
     needs: playwright-emulator
-    runs-on: macos-latest
+    runs-on: macos-13
     steps:
         
       - name: checkout
