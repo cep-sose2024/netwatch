@@ -116,4 +116,4 @@ jobs:
         uses: actions/upload-artifact@v3
         with:
           name: apk
-          path: ./
+          path: /Users/runner/work/netwatch/netwatch/prototype/app/build/outputs/apk/debug
