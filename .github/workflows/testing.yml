@@ -101,7 +101,7 @@ jobs:
 
   Testing-evn:
     needs: playwright-emulator
-     test:
+    
     runs-on: ubuntu-latest
     strategy:
       matrix:
@@ -120,6 +120,7 @@ jobs:
       - name: run tests
         uses: reactivecircus/android-emulator-runner@v2
         with:
+          working-directory: ./prototype
           api-level: ${{ matrix.api-level }}
           target: ${{ matrix.target }}
           arch: x86_64
